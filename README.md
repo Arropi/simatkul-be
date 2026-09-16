@@ -180,3 +180,87 @@ Hello World
 ## 📄 Lisensi
 
 Proyek ini dilisensikan di bawah lisensi **[MIT License](LICENSE)**. Anda bebas menggunakan, memodifikasi, dan mendistribusikan proyek ini untuk keperluan pribadi maupun komersial.
+
+## 🤝 Panduan Kolaborasi & Kontribusi
+
+### Konvensi Pesan Commit
+- Gunakan standar [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) untuk seluruh pesan commit.
+- Awali pesan commit Anda dengan salah satu tipe berikut:
+  - `feat`: Menambahkan fitur baru
+  - `fix`: Memperbaiki bug
+  - `docs`: Perubahan atau pembaruan dokumentasi saja
+  - `chore`: Perubahan pemeliharaan, build, atau perkakas (*tooling*)
+  - `refactor`: Perubahan struktur kode yang tidak memperbaiki bug maupun menambah fitur
+  - `test`: Menambah atau memperbarui pengujian (*unit/integration test*)
+  - `style`: Format kode, titik koma, spasi, dsb (tidak ada perubahan logika kode)
+  - `perf`: Peningkatan performa atau optimasi kode
+- Contoh:
+  ```
+  feat(auth): add OAuth login with Google
+  fix(product): correct price calculation bug
+  docs: update README with setup instructions
+  ```
+
+### Konvensi Penamaan Branch
+- Gunakan format: `<devname>.<feature>`
+- Contoh: `arrofi.auth`, `wafiy.product-listing`, `denis.fix-login`
+- Gunakan nama fitur yang singkat dan deskriptif. Gunakan tanda hubung (*hyphen*) jika terdiri dari beberapa kata: `john.product-table-fix`
+
+### Aturan Pull Request (PR)
+- Judul PR harus jelas dan mereferensikan perubahan utama yang dibuat (contoh: `feat: add Kanban drag-and-drop`).
+- Tautkan *issue* terkait pada deskripsi PR jika tersedia.
+- Berikan ringkasan perubahan yang jelas serta instruksi khusus bagi *reviewer* jika diperlukan.
+- Pastikan seluruh pengecekan (CI, *lint*, *test*) lolos sebelum meminta *review*.
+- Tugaskan (*assign*) minimal satu *reviewer*; hindari melakukan *self-merge* kecuali dalam kondisi mendesak.
+- Gunakan *Draft PR* untuk pekerjaan yang masih dalam tahap pengerjaan (*work-in-progress*).
+
+### Aturan Umum Kolaborasi
+- Lakukan sinkronisasi dengan branch `dev` terbaru sebelum memulai pekerjaan baru.
+- Usahakan ukuran PR tetap terfokus dan sekecil mungkin; pisahkan menjadi beberapa PR jika perubahan terlalu besar.
+- Tambahkan komentar kode (*code comments*) untuk logika yang kompleks atau keputusan arsitektur tertentu.
+- Dokumentasikan variabel lingkungan (*environment variables*) baru atau perubahan konfigurasi pada file README.
+- Diskusikan *breaking changes* atau perubahan arsitektur besar di *issue* sebelum mulai mengimplementasikannya.
+- Selalu bersikap saling menghargai dan konstruktif dalam diskusi serta *code review*.
+
+### Alur Kerja Push/Pull (Git Workflow)
+
+Proyek ini menggunakan dua branch utama:
+- **main**: Branch produksi / *production* (kode stabil siap rilis/deploy)
+- **dev**: Branch pengembangan / *staging* (untuk integrasi fitur dan pengujian bersama)
+
+> **Semua branch fitur/perbaikan wajib di-merge ke branch `dev`, _bukan_ langsung ke `main`. Hanya maintainer yang berhak melakukan merge dari `dev` ke `main` saat rilis produksi.**
+
+#### Langkah-langkah Alur Kerja Kontributor
+<picture><img alt="Sentry" src=".github/images/git_workflow.png">
+        </picture>
+
+1. **Sinkronkan repositori lokal Anda**
+   - Pastikan Anda berada pada branch `dev` terbaru:
+     ```sh
+     git checkout dev
+     git pull origin dev
+     ```
+2. **Buat branch fitur/perbaikan baru**
+   - Gunakan konvensi penamaan branch yang telah ditentukan:
+     ```sh
+     git checkout -b <devname>.<feature>
+     # Contoh: git checkout -b nafhan.auth
+     ```
+3. **Kerjakan perubahan kode Anda**
+   - Lakukan commit dengan format [conventional commit](#konvensi-pesan-commit).
+4. **Sinkronkan dengan `dev` sebelum melakukan push**
+   - Sebelum push, selalu tarik perubahan terbaru dari `dev` untuk menghindari konflik (*merge conflict*):
+     ```sh
+     git checkout dev
+     git pull origin dev
+     git checkout <your-branch>
+     git merge dev
+     # Selesaikan konflik jika ada
+     ```
+5. **Push branch Anda ke remote repository**
+   ```sh
+   git push origin <your-branch>
+   ```
+6. **Buka Pull Request (PR)**
+   - Arahkan target branch ke `dev` (bukan `main`).
+   - Lengkapi deskripsi PR, tautkan *issue* jika ada, dan ajukan permintaan *review*.
