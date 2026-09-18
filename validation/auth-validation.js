@@ -39,36 +39,6 @@ export function loginValidation(req, res, next) {
   }
 }
 
-export function userValidation(req, res, next) {
-  try {
-    const username = z
-      .string({
-        error: (iss) =>
-          iss.input === undefined
-            ? "Field Username Cannot Be Empty"
-            : "Invalid input on username",
-      }).min(1, "Field Username Cannot Be Empty")
-      .parse(req.body.username);
-    const email = z
-      .email({
-        error: (iss) =>
-          iss.input === undefined
-            ? "Field Email Cannot Be Empty"
-            : "Invalid input on email",
-      })
-      .parse(req.body.email);
-    next();
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const err = new Error(error.issues[0].message);
-      err.statusCode = 400;
-      next(err);
-    } else {
-      next(error);
-    }
-  }
-}
-
 export function adminValidation (req, res, next){
   try {
     const {role} = req.user

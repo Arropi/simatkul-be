@@ -17,7 +17,7 @@ export async function loginService(username, password) {
     throw error;
   }
 
-  const secretKey = JWT_SECRET || "simatkulkeceparah";
+  const secretKey = JWT_SECRET
   const token = jwt.sign(
     {
       username: user.username,

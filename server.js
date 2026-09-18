@@ -13,16 +13,12 @@ app.use(cors())
 
 await ConnectDB()
 
-app.get("/", (req, res)=> {
+app.get("/", (req, res) => {
     res.send("Hello World")
 })
 
 app.use("/api/auth", authRouter)
-app.use("/auth", authRouter)
-
 app.use("/api/master-data", masterDataRouter)
-app.use("/api", masterDataRouter)
-app.use("/master-data", masterDataRouter)
 
 app.use(errorMiddleware)
 

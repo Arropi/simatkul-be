@@ -26,10 +26,8 @@ export const dosenSchema = z.object({
   nama: z.string().min(1, "Field nama tidak boleh kosong"),
   nidn: z.string().min(1, "Field nidn tidak boleh kosong"),
   jabatan_akademik: z.string().optional(),
-  jabatanAkademik: z.string().optional(),
 }).refine(
-  (data) => (data.jabatan_akademik && data.jabatan_akademik.trim().length > 0) ||
-            (data.jabatanAkademik && data.jabatanAkademik.trim().length > 0),
+  (data) => (data.jabatan_akademik && data.jabatan_akademik.trim().length > 0),
   {
     message: "Field jabatan_akademik tidak boleh kosong",
     path: ["jabatan_akademik"],
