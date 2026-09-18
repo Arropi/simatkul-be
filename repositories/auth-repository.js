@@ -1,21 +1,37 @@
-import jwt from 'jsonwebtoken'
+import { eq, and } from "drizzle-orm";
+import { db } from "../config/database.js";
+import { users } from "../config/schema.js";
 
-export default function authMiddleware(req, res, next) {
-    const {authorization} = req.headers
-    if(!authorization){
-        const error = new Error("Token needed");
-        error.statusCode = 403;
-        throw error;
-    }
-    try {
-        const secretToken = process.env.JWT_SECRET
-        const token = authorization.split(' ')[1]
-        const jwtDecode = jwt.verify(token, secretToken)
-        req.user = jwtDecode
-        next()
-    } catch (error) {
-        const err = new Error("Authorize failed");
-        err.statusCode = 401;
-        next(err)
-    }
+/**
+ * Melakukan query login pada tabel user
+ * @param {string} username 
+ * @param {string} password 
+ * @returns {Promise<object|null>}
+ */
+export async function loginUser(username, password) {
+  const result = await db
+    .select({
+      username: users.username,
+      role: users.role,
+    })
+    .from(users)
+    .where(and(eq(users.username, username), eq(users.password, password)))
+    .limit(1);
+
+  return result[0] || null;
+}
+
+/**
+ * Mencari user berdasarkan username
+ * @param {string} username 
+ * @returns {Promise<object|null>}
+ */
+export async function findUserByUsername(username) {
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1);
+
+  return result[0] || null;
 }

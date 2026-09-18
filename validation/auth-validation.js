@@ -1,22 +1,32 @@
 import { z, ZodError } from "zod";
-export function userValidation(req, res, next) {
+
+export const loginSchema = z.object({
+  username: z
+    .string({
+      error: (iss) =>
+        iss.input === undefined
+          ? "Field Username Cannot Be Empty"
+          : "Invalid input on username",
+    })
+    .min(1, "Field Username Cannot Be Empty"),
+  password: z
+    .string({
+      error: (iss) =>
+        iss.input === undefined
+          ? "Field Password Cannot Be Empty"
+          : "Invalid input on password",
+    })
+    .min(1, "Field Password Cannot Be Empty"),
+});
+
+export function loginValidation(req, res, next) {
   try {
-    const username = z
-      .string({
-        error: (iss) =>
-          iss.input === undefined
-            ? "Field Username Cannot Be Empty"
-            : "Invalid input on username",
-      }).min(1, "Field Username Cannot Be Empty")
-      .parse(req.body.username);
-    const email = z
-      .email({
-        error: (iss) =>
-          iss.input === undefined
-            ? "Field Email Cannot Be Empty"
-            : "Invalid input on email",
-      })
-      .parse(req.body.email);
+    if (!req.body) {
+      const err = new Error("Request body cannot be empty");
+      err.statusCode = 400;
+      return next(err);
+    }
+    loginSchema.parse(req.body);
     next();
   } catch (error) {
     if (error instanceof ZodError) {
