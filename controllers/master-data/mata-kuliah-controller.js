@@ -2,10 +2,26 @@ import * as mataKuliahService from "../../services/master-data/mata-kuliah-servi
 
 export async function getAllMataKuliah(req, res, next) {
   try {
-    const data = await mataKuliahService.getAllMataKuliahService();
+    const kurikulumId = req.query.kurikulum_id || req.query.kurikulumId;
+    const data = await mataKuliahService.getAllMataKuliahService(kurikulumId);
     res.status(200).json({
       message: "Data mata kuliah berhasil diambil",
       data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getMataKuliahByKurikulumId(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const query = req.validatedQuery || req.query;
+    const { data, pagination } = await mataKuliahService.getMataKuliahByKurikulumIdService(kurikulumId, query);
+    res.status(200).json({
+      message: "Data mata kuliah berhasil diambil",
+      data,
+      pagination,
     });
   } catch (error) {
     next(error);
@@ -27,7 +43,15 @@ export async function getMataKuliahById(req, res, next) {
 
 export async function createMataKuliah(req, res, next) {
   try {
-    const data = await mataKuliahService.createMataKuliahService(req.body);
+    const kurikulumId =
+      req.params.kurikulumId ||
+      req.params.kurikulum_id ||
+      req.body.kurikulum_id ||
+      req.body.kurikulumId ||
+      req.query.kurikulum_id ||
+      req.query.kurikulumId;
+
+    const data = await mataKuliahService.createMataKuliahService(req.body, kurikulumId);
     res.status(201).json({
       message: "Data mata kuliah berhasil ditambahkan",
       data,

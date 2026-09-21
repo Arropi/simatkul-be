@@ -2,7 +2,21 @@ import * as dosenService from "../../services/master-data/dosen-service.js";
 
 export async function getAllDosen(req, res, next) {
   try {
-    const data = await dosenService.getAllDosenService();
+    const kurikulumId = req.query.kurikulum_id || req.query.kurikulumId;
+    const data = await dosenService.getAllDosenService(kurikulumId);
+    res.status(200).json({
+      message: "Data dosen berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDosenByKurikulumId(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await dosenService.getDosenByKurikulumIdService(kurikulumId);
     res.status(200).json({
       message: "Data dosen berhasil diambil",
       data,
@@ -27,7 +41,15 @@ export async function getDosenById(req, res, next) {
 
 export async function createDosen(req, res, next) {
   try {
-    const data = await dosenService.createDosenService(req.body);
+    const kurikulumId =
+      req.params.kurikulumId ||
+      req.params.kurikulum_id ||
+      req.body.kurikulum_id ||
+      req.body.kurikulumId ||
+      req.query.kurikulum_id ||
+      req.query.kurikulumId;
+
+    const data = await dosenService.createDosenService(req.body, kurikulumId);
     res.status(201).json({
       message: "Data dosen berhasil ditambahkan",
       data,

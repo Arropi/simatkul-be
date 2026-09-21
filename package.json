@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.3",
     "nodemon": "^3.1.14",
     "pg": "^8.23.0",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^4.6.1"
   },
   "devDependencies": {

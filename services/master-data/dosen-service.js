@@ -1,7 +1,19 @@
 import * as dosenRepo from "../../repositories/master-data/dosen-repository.js";
+import * as kurikulumRepo from "../../repositories/master-data/kurikulum-repository.js";
 
-export async function getAllDosenService() {
-  return await dosenRepo.getAllDosen();
+export async function getAllDosenService(kurikulumId) {
+  const parsedKurikulumId = kurikulumId ? Number(kurikulumId) : undefined;
+  return await dosenRepo.getAllDosen(parsedKurikulumId);
+}
+
+export async function getDosenByKurikulumIdService(kurikulumId) {
+  const parsedKurikulumId = Number(kurikulumId);
+  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
+    const error = new Error("Parameter kurikulum_id harus berupa angka integer positif");
+    error.statusCode = 400;
+    throw error;
+  }
+  return await dosenRepo.getAllDosen(parsedKurikulumId);
 }
 
 export async function getDosenByIdService(id) {
@@ -14,13 +26,36 @@ export async function getDosenByIdService(id) {
   return data;
 }
 
-export async function createDosenService(payload) {
+export async function createDosenService(payload, kurikulumId) {
+  const parsedKurikulumId = Number(
+    kurikulumId ||
+    payload.kurikulum_id ||
+    payload.kurikulumId
+  );
+
+  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
+    const error = new Error("Parameter kurikulum_id wajib diisi");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Validasi kurikulum di database
+  const kurikulumData = await kurikulumRepo.getKurikulumById(parsedKurikulumId);
+  if (!kurikulumData) {
+    const error = new Error(`Data kurikulum dengan ID ${parsedKurikulumId} tidak ditemukan`);
+    error.statusCode = 404;
+    throw error;
+  }
+
   const data = {
     nama: payload.nama.trim(),
     nidn: payload.nidn.trim(),
     jabatan_akademik: (payload.jabatan_akademik || payload.jabatanAkademik).trim(),
   };
-  return await dosenRepo.createDosen(data);
+
+  const created = await dosenRepo.createDosen(data);
+  await dosenRepo.linkKurikulumDosen(parsedKurikulumId, created.id);
+  return created;
 }
 
 export async function updateDosenService(id, payload) {
