@@ -27,7 +27,22 @@ export async function getKurikulumById(req, res, next) {
 
 export async function createKurikulum(req, res, next) {
   try {
-    const data = await kurikulumService.createKurikulumService(req.body);
+    const copyQuery = req.query.copy;
+    const isCopy =
+      copyQuery !== undefined
+        ? copyQuery === "true" || copyQuery === "1" || copyQuery === "" || copyQuery === true
+        : req.body.copy === true || req.body.copy === "true" || req.body.copy === "1" || req.body.copy === 1;
+
+    const sourceKurikulumId =
+      req.body.kurikulumId ||
+      req.body.kurikulum_id ||
+      req.query.kurikulumId ||
+      req.query.kurikulum_id;
+
+    const data = await kurikulumService.createKurikulumService(req.body, {
+      copy: isCopy,
+      kurikulumId: sourceKurikulumId,
+    });
     res.status(201).json({
       message: "Data kurikulum berhasil ditambahkan",
       data,

@@ -2,7 +2,21 @@ import * as ruangService from "../../services/master-data/ruang-service.js";
 
 export async function getAllRuang(req, res, next) {
   try {
-    const data = await ruangService.getAllRuangService();
+    const kurikulumId = req.query.kurikulum_id || req.query.kurikulumId;
+    const data = await ruangService.getAllRuangService(kurikulumId);
+    res.status(200).json({
+      message: "Data ruang berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getRuangByKurikulumId(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await ruangService.getRuangByKurikulumIdService(kurikulumId);
     res.status(200).json({
       message: "Data ruang berhasil diambil",
       data,
@@ -27,7 +41,15 @@ export async function getRuangById(req, res, next) {
 
 export async function createRuang(req, res, next) {
   try {
-    const data = await ruangService.createRuangService(req.body);
+    const kurikulumId =
+      req.params.kurikulumId ||
+      req.params.kurikulum_id ||
+      req.body.kurikulum_id ||
+      req.body.kurikulumId ||
+      req.query.kurikulum_id ||
+      req.query.kurikulumId;
+
+    const data = await ruangService.createRuangService(req.body, kurikulumId);
     res.status(201).json({
       message: "Data ruang berhasil ditambahkan",
       data,

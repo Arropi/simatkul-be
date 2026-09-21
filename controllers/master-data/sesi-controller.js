@@ -2,7 +2,21 @@ import * as sesiService from "../../services/master-data/sesi-service.js";
 
 export async function getAllSesi(req, res, next) {
   try {
-    const data = await sesiService.getAllSesiService();
+    const kurikulumId = req.query.kurikulum_id || req.query.kurikulumId;
+    const data = await sesiService.getAllSesiService(kurikulumId);
+    res.status(200).json({
+      message: "Data sesi berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getSesiByKurikulumId(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await sesiService.getSesiByKurikulumIdService(kurikulumId);
     res.status(200).json({
       message: "Data sesi berhasil diambil",
       data,
@@ -27,7 +41,15 @@ export async function getSesiById(req, res, next) {
 
 export async function createSesi(req, res, next) {
   try {
-    const data = await sesiService.createSesiService(req.body);
+    const kurikulumId =
+      req.params.kurikulumId ||
+      req.params.kurikulum_id ||
+      req.body.kurikulum_id ||
+      req.body.kurikulumId ||
+      req.query.kurikulum_id ||
+      req.query.kurikulumId;
+
+    const data = await sesiService.createSesiService(req.body, kurikulumId);
     res.status(201).json({
       message: "Data sesi berhasil ditambahkan",
       data,

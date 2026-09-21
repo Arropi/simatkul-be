@@ -12,11 +12,25 @@ function handleZodError(error, next) {
 
 // Middleware validasi ID Parameter
 export function idParamValidation(req, res, next) {
-  const id = Number(req.params.id);
-  if (!req.params.id || isNaN(id) || !Number.isInteger(id) || id <= 0) {
+  const paramVal = req.params.id || req.params.kurikulumId;
+  const id = Number(paramVal);
+  if (!paramVal || isNaN(id) || !Number.isInteger(id) || id <= 0) {
     const err = new Error("Parameter ID harus berupa angka integer positif");
     err.statusCode = 400;
     return next(err);
+  }
+  next();
+}
+
+// Middleware validasi Kurikulum ID Parameter jika ada
+export function kurikulumParamValidation(req, res, next) {
+  if (req.params.kurikulumId !== undefined) {
+    const id = Number(req.params.kurikulumId);
+    if (!req.params.kurikulumId || isNaN(id) || !Number.isInteger(id) || id <= 0) {
+      const err = new Error("Parameter kurikulum_id harus berupa angka integer positif");
+      err.statusCode = 400;
+      return next(err);
+    }
   }
   next();
 }
@@ -26,8 +40,12 @@ export const dosenSchema = z.object({
   nama: z.string().min(1, "Field nama tidak boleh kosong"),
   nidn: z.string().min(1, "Field nidn tidak boleh kosong"),
   jabatan_akademik: z.string().optional(),
+  jabatanAkademik: z.string().optional(),
+  kurikulum_id: z.coerce.number().int().positive().optional(),
+  kurikulumId: z.coerce.number().int().positive().optional(),
 }).refine(
-  (data) => (data.jabatan_akademik && data.jabatan_akademik.trim().length > 0),
+  (data) => (data.jabatan_akademik && data.jabatan_akademik.trim().length > 0) ||
+            (data.jabatanAkademik && data.jabatanAkademik.trim().length > 0),
   {
     message: "Field jabatan_akademik tidak boleh kosong",
     path: ["jabatan_akademik"],
@@ -50,19 +68,38 @@ export function dosenValidation(req, res, next) {
 
 // === KELAS ===
 export const kelasSchema = z.object({
-  prodi: z.enum(["TRPL", "TRI", "TRE", "TRIK"], {
-    error: () => "Prodi harus salah satu dari: TRPL, TRI, TRE, TRIK",
+  prodi: z.enum(["TRI", "TRPL", "TRIK", "TRE"], {
+    error: () => "Prodi harus salah satu dari: TRI, TRPL, TRIK, TRE",
   }),
   semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
-  kelas: z.string().min(1, "Field kelas tidak boleh kosong"),
+  kelas_teori: z.coerce.number().int().min(0, "kelas_teori harus berupa angka minimal 0").optional(),
+  kelasTeori: z.coerce.number().int().min(0).optional(),
+  kelas_praktikum: z.coerce.number().int().min(0, "kelas_praktikum harus berupa angka minimal 0").optional(),
+  kelasPraktikum: z.coerce.number().int().min(0).optional(),
+  jumlah_kelas: z.coerce.number().int().min(1).max(4).optional(),
+  jumlahKelas: z.coerce.number().int().min(1).max(4).optional(),
+  kelas: z.string().optional(),
   kode_kelas: z.string().optional(),
   kodeKelas: z.string().optional(),
+  kurikulum_id: z.coerce.number().int().positive().optional(),
+  kurikulumId: z.coerce.number().int().positive().optional(),
 }).refine(
-  (data) => (data.kode_kelas && data.kode_kelas.trim().length > 0) ||
-            (data.kodeKelas && data.kodeKelas.trim().length > 0),
+  (data) => {
+    const hasTeori = data.kelas_teori !== undefined || data.kelasTeori !== undefined;
+    const hasPraktikum = data.kelas_praktikum !== undefined || data.kelasPraktikum !== undefined;
+    const hasJumlah = data.jumlah_kelas !== undefined || data.jumlahKelas !== undefined;
+    if (hasTeori || hasPraktikum || hasJumlah) {
+      return true;
+    }
+    return Boolean(
+      data.kelas &&
+      ((data.kode_kelas && data.kode_kelas.trim().length > 0) ||
+       (data.kodeKelas && data.kodeKelas.trim().length > 0))
+    );
+  },
   {
-    message: "Field kode_kelas tidak boleh kosong",
-    path: ["kode_kelas"],
+    message: "Field kelas_teori dan kelas_praktikum wajib diisi",
+    path: ["kelas_teori"],
   }
 );
 
@@ -80,6 +117,30 @@ export function kelasValidation(req, res, next) {
   }
 }
 
+export const updateKelasSchema = z.object({
+  prodi: z.enum(["TRI", "TRPL", "TRIK", "TRE"], {
+    error: () => "Prodi harus salah satu dari: TRI, TRPL, TRIK, TRE",
+  }).optional(),
+  semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1").optional(),
+  kelas: z.string().min(1, "Field kelas tidak boleh kosong").optional(),
+  kode_kelas: z.string().optional(),
+  kodeKelas: z.string().optional(),
+});
+
+export function updateKelasValidation(req, res, next) {
+  try {
+    if (!req.body || typeof req.body !== "object") {
+      const err = new Error("Request body tidak boleh kosong");
+      err.statusCode = 400;
+      return next(err);
+    }
+    updateKelasSchema.parse(req.body);
+    next();
+  } catch (error) {
+    handleZodError(error, next);
+  }
+}
+
 // === KURIKULUM ===
 export const kurikulumSchema = z.object({
   semester: z.enum(["Ganjil", "Genap"], {
@@ -88,6 +149,9 @@ export const kurikulumSchema = z.object({
   tahun_ajaran: z.coerce.number().int().min(1900, "Tahun ajaran minimal 1900").max(2100, "Tahun ajaran maksimal 2100").optional(),
   tahun: z.coerce.number().int().min(1900, "Tahun ajaran minimal 1900").max(2100, "Tahun ajaran maksimal 2100").optional(),
   description: z.string().optional().nullable(),
+  kurikulumId: z.coerce.number().int().positive().optional(),
+  kurikulum_id: z.coerce.number().int().positive().optional(),
+  copy: z.union([z.boolean(), z.string()]).optional(),
 }).refine(
   (data) => data.tahun_ajaran !== undefined || data.tahun !== undefined,
   {
@@ -127,6 +191,8 @@ export const mataKuliahSchema = z.object({
   tipe_kelas: z.string().optional(),
   tipeKelas: z.string().optional(),
   semester: z.coerce.number().int().min(1, "Semester minimal 1"),
+  kurikulum_id: z.coerce.number().int().positive().optional(),
+  kurikulumId: z.coerce.number().int().positive().optional(),
 }).refine(
   (data) => {
     const val = data.tipe_kelas || data.tipeKelas;
@@ -152,9 +218,122 @@ export function mataKuliahValidation(req, res, next) {
   }
 }
 
+const emptyToUndefined = (val) =>
+  val === undefined || val === null || (typeof val === "string" && val.trim() === "")
+    ? undefined
+    : val;
+
+export const getMataKuliahQuerySchema = z.object({
+  page: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1, "Query page minimal 1").optional()),
+  limit: z.preprocess(
+    emptyToUndefined,
+    z.union([
+      z.literal("all"),
+      z.coerce.number().int().min(1, "Query limit minimal 1"),
+    ]).optional()
+  ),
+  search: z.preprocess(emptyToUndefined, z.string().optional()),
+  q: z.preprocess(emptyToUndefined, z.string().optional()),
+  prodi: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() !== "" ? v.trim().toUpperCase() : emptyToUndefined(v)),
+    z.enum(["TRPL", "TRI", "TRE", "TRIK"], {
+      error: () => "Prodi harus salah satu dari: TRPL, TRI, TRE, TRIK",
+    }).optional()
+  ),
+  semester: z.preprocess(
+    (v) => {
+      if (v === undefined || v === null || (typeof v === "string" && v.trim() === "")) return undefined;
+      if (!isNaN(Number(v))) return Number(v);
+      const s = String(v).trim().toLowerCase();
+      if (s === "ganjil" || s === "genap") return s;
+      return v;
+    },
+    z.union([
+      z.number().int().min(1, { message: "Semester minimal 1" }),
+      z.enum(["ganjil", "genap"], { error: () => "Semester harus berupa angka atau 'ganjil'/'genap'" }),
+    ]).optional()
+  ),
+  jenis: z.preprocess(
+    (v) => {
+      if (typeof v !== "string" || v.trim() === "") return undefined;
+      const lower = v.trim().toLowerCase();
+      if (lower === "wajib") return "Wajib";
+      if (lower === "pilihan") return "Pilihan";
+      return v;
+    },
+    z.enum(["Wajib", "Pilihan"], {
+      error: () => "Jenis harus 'Wajib' atau 'Pilihan'",
+    }).optional()
+  ),
+  kelompok: z.preprocess(
+    (v) => {
+      if (typeof v !== "string" || v.trim() === "") return undefined;
+      const lower = v.trim().toLowerCase();
+      if (lower === "teori") return "Teori";
+      if (lower === "praktikum") return "Praktikum";
+      return v;
+    },
+    z.enum(["Teori", "Praktikum"], {
+      error: () => "Kelompok harus 'Teori' atau 'Praktikum'",
+    }).optional()
+  ),
+  tipe_kelas: z.preprocess(
+    (v) => {
+      if (typeof v !== "string" || v.trim() === "") return undefined;
+      const upper = v.trim().toUpperCase();
+      if (upper === "MKK" || upper === "MKDU") return upper;
+      return v;
+    },
+    z.enum(["MKK", "MKDU"], {
+      error: () => "Tipe kelas harus 'MKK' atau 'MKDU'",
+    }).optional()
+  ),
+  tipeKelas: z.preprocess(
+    (v) => {
+      if (typeof v !== "string" || v.trim() === "") return undefined;
+      const upper = v.trim().toUpperCase();
+      if (upper === "MKK" || upper === "MKDU") return upper;
+      return v;
+    },
+    z.enum(["MKK", "MKDU"], {
+      error: () => "Tipe kelas harus 'MKK' atau 'MKDU'",
+    }).optional()
+  ),
+  sks: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1, "Field sks minimal 1").max(10, "Field sks maksimal 10").optional()),
+  kode: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1, "Field kode harus berupa angka positif").optional()),
+  sortBy: z.preprocess(
+    emptyToUndefined,
+    z.enum(["id", "kode", "nama", "sks", "prodi", "jenis", "kelompok", "tipe_kelas", "semester"], {
+      error: () => "sortBy harus salah satu dari: id, kode, nama, sks, prodi, jenis, kelompok, tipe_kelas, semester",
+    }).optional()
+  ),
+  order: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() !== "" ? v.trim().toLowerCase() : emptyToUndefined(v)),
+    z.enum(["asc", "desc"], {
+      error: () => "order harus 'asc' atau 'desc'",
+    }).optional()
+  ),
+  paginate: z.preprocess(emptyToUndefined, z.union([z.boolean(), z.string()]).optional()),
+  kurikulum_id: z.preprocess(emptyToUndefined, z.coerce.number().int().positive().optional()),
+  kurikulumId: z.preprocess(emptyToUndefined, z.coerce.number().int().positive().optional()),
+});
+
+export function mataKuliahQueryValidation(req, res, next) {
+  try {
+    const validated = getMataKuliahQuerySchema.parse(req.query);
+    req.validatedQuery = validated;
+    next();
+  } catch (error) {
+    handleZodError(error, next);
+  }
+}
+
+
 // === RUANG ===
 export const ruangSchema = z.object({
   nama: z.string().min(1, "Field nama ruang tidak boleh kosong"),
+  kurikulum_id: z.coerce.number().int().positive().optional(),
+  kurikulumId: z.coerce.number().int().positive().optional(),
 });
 
 export function ruangValidation(req, res, next) {
@@ -178,6 +357,8 @@ export const sesiSchema = z.object({
   jamMulai: z.string().optional(),
   jam_akhir: z.string().optional(),
   jamAkhir: z.string().optional(),
+  kurikulum_id: z.coerce.number().int().positive().optional(),
+  kurikulumId: z.coerce.number().int().positive().optional(),
 }).refine(
   (data) => {
     const start = data.jam_mulai || data.jamMulai;

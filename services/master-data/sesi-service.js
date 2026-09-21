@@ -1,8 +1,20 @@
 import * as sesiRepo from "../../repositories/master-data/sesi-repository.js";
+import * as kurikulumRepo from "../../repositories/master-data/kurikulum-repository.js";
 import { normalizeTimestamp, isStartTimeEarlier } from "../../utils/date-utils.js";
 
-export async function getAllSesiService() {
-  return await sesiRepo.getAllSesi();
+export async function getAllSesiService(kurikulumId) {
+  const parsedKurikulumId = kurikulumId ? Number(kurikulumId) : undefined;
+  return await sesiRepo.getAllSesi(parsedKurikulumId);
+}
+
+export async function getSesiByKurikulumIdService(kurikulumId) {
+  const parsedKurikulumId = Number(kurikulumId);
+  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
+    const error = new Error("Parameter kurikulum_id harus berupa angka integer positif");
+    error.statusCode = 400;
+    throw error;
+  }
+  return await sesiRepo.getAllSesi(parsedKurikulumId);
 }
 
 export async function getSesiByIdService(id) {
@@ -15,7 +27,27 @@ export async function getSesiByIdService(id) {
   return data;
 }
 
-export async function createSesiService(payload) {
+export async function createSesiService(payload, kurikulumId) {
+  const parsedKurikulumId = Number(
+    kurikulumId ||
+    payload.kurikulum_id ||
+    payload.kurikulumId
+  );
+
+  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
+    const error = new Error("Parameter kurikulum_id wajib diisi");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Validasi kurikulum di database
+  const kurikulumData = await kurikulumRepo.getKurikulumById(parsedKurikulumId);
+  if (!kurikulumData) {
+    const error = new Error(`Data kurikulum dengan ID ${parsedKurikulumId} tidak ditemukan`);
+    error.statusCode = 404;
+    throw error;
+  }
+
   const rawStart = payload.jam_mulai || payload.jamMulai;
   const rawEnd = payload.jam_akhir || payload.jamAkhir;
 
@@ -32,7 +64,9 @@ export async function createSesiService(payload) {
     jam_akhir: normalizeTimestamp(rawEnd),
   };
 
-  return await sesiRepo.createSesi(data);
+  const created = await sesiRepo.createSesi(data);
+  await sesiRepo.linkKurikulumSesi(parsedKurikulumId, created.id);
+  return created;
 }
 
 export async function updateSesiService(id, payload) {

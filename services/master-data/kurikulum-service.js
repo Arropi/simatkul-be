@@ -49,16 +49,55 @@ export async function getKurikulumByIdService(id) {
   return found;
 }
 
-export async function createKurikulumService(payload) {
+export async function createKurikulumService(payload, options = {}) {
   const rawYear = payload.tahun_ajaran !== undefined ? payload.tahun_ajaran : payload.tahun;
   const convertedTahun = normalizeYearToDate(rawYear);
+
+  const isCopy = Boolean(
+    options.copy === true ||
+    options.copy === "true" ||
+    options.copy === 1 ||
+    options.copy === "1" ||
+    payload.copy === true ||
+    payload.copy === "true" ||
+    payload.copy === 1 ||
+    payload.copy === "1"
+  );
+
+  const sourceKurikulumId = Number(
+    options.kurikulumId ||
+    options.kurikulum_id ||
+    payload.kurikulumId ||
+    payload.kurikulum_id
+  );
+
+  if (isCopy) {
+    if (!sourceKurikulumId || isNaN(sourceKurikulumId) || sourceKurikulumId <= 0) {
+      const error = new Error("Parameter kurikulumId wajib diisi saat opsi copy aktif");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const sourceKurikulum = await kurikulumRepo.getKurikulumById(sourceKurikulumId);
+    if (!sourceKurikulum) {
+      const error = new Error(`Data kurikulum asal dengan ID ${sourceKurikulumId} tidak ditemukan`);
+      error.statusCode = 404;
+      throw error;
+    }
+  }
 
   const data = {
     semester: payload.semester.trim(),
     tahun: convertedTahun,
     description: payload.description ? payload.description.trim() : null,
   };
-  return await kurikulumRepo.createKurikulum(data);
+  const created = await kurikulumRepo.createKurikulum(data);
+
+  if (isCopy) {
+    await kurikulumRepo.copyKurikulumRelations(sourceKurikulumId, created.id);
+  }
+
+  return await getKurikulumByIdService(created.id);
 }
 
 export async function updateKurikulumService(id, payload) {

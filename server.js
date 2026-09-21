@@ -4,6 +4,7 @@ import { PORT } from "./config/env.js"
 import { ConnectDB } from "./config/database.js"
 import authRouter from "./routes/auth-route.js"
 import masterDataRouter from "./routes/master-data/index.js"
+import swaggerRouter from "./routes/swagger-route.js"
 import { errorMiddleware } from "./middleware/error-middleware.js"
 
 const app = express()
@@ -19,9 +20,11 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRouter)
 app.use("/api/master-data", masterDataRouter)
+app.use("/api-docs", swaggerRouter)
 
 app.use(errorMiddleware)
 
 app.listen(PORT, async() => {
     console.log(`Listening To http://localhost:${PORT}`)
-})
+    console.log(`Swagger Docs available at http://localhost:${PORT}/api-docs`)
+})
