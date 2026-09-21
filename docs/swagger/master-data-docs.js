@@ -7,7 +7,7 @@ export const masterDataSwaggerDoc = {
 
 ---
 
-### ⚠️ Format Penjelasan Error Response Global (\`middleware/error-middleware.js\`)
+### Format Penjelasan Error Response Global (\`middleware/error-middleware.js\`)
 Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang seragam:
 \`\`\`json
 {
@@ -1943,8 +1943,20 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       // Error Response
       ErrorResponse: {
         type: "object",
+        required: ["message"],
         properties: {
           message: { type: "string", example: "Penjelasan pesan error validasi atau sistem" },
+        },
+      },
+      GlobalErrorResponse: {
+        type: "object",
+        required: ["message"],
+        properties: {
+          message: {
+            type: "string",
+            description: "Format response error global terstandarisasi dari error-middleware.js",
+            example: "Parameter ID harus berupa angka integer positif",
+          },
         },
       },
     },

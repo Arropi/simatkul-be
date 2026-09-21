@@ -7,7 +7,7 @@ export const authSwaggerDoc = {
 
 ---
 
-### ⚠️ Format Penjelasan Error Response Global (\`middleware/error-middleware.js\`)
+### Format Penjelasan Error Response Global (\`middleware/error-middleware.js\`)
 Setiap kegagalan request (validasi Zod, kredensial salah, token expired, dsb.) menghasilkan format JSON standar:
 \`\`\`json
 {
@@ -164,10 +164,22 @@ Setiap kegagalan request (validasi Zod, kredensial salah, token expired, dsb.) m
       },
       ErrorResponse: {
         type: "object",
+        required: ["message"],
         properties: {
           message: {
             type: "string",
             example: "Error message details",
+          },
+        },
+      },
+      GlobalErrorResponse: {
+        type: "object",
+        required: ["message"],
+        properties: {
+          message: {
+            type: "string",
+            description: "Format response error global terstandarisasi dari error-middleware.js",
+            example: "Invalid username or password",
           },
         },
       },
