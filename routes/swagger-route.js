@@ -4,33 +4,21 @@ import { authSwaggerDoc } from "../docs/swagger/auth-docs.js";
 import { masterDataSwaggerDoc } from "../docs/swagger/master-data-docs.js";
 import { combinedSwaggerDoc } from "../docs/swagger/combined-docs.js";
 import { renderSwaggerPortalHtml } from "../docs/swagger/portal-html.js";
+import { customNavScript } from "../docs/ui/custom-nav.js";
 
 const swaggerRouter = Router();
 
-// Custom navbar script untuk halaman Swagger UI agar pengguna mudah berpindah modul dengan gaya formal
+// CDN Swagger UI agar aset CSS & JS ter-load dengan sempurna di Vercel Serverless
+const SWAGGER_CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css";
+const SWAGGER_JS_URLS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-standalone-preset.js",
+  "/api-docs/custom-nav.js"
+];
+
+// Custom navbar script untuk halaman Swagger UI agar pengguna mudah berpindah modul
 swaggerRouter.get("/custom-nav.js", (req, res) => {
-  res.type("application/javascript").send(`
-    window.addEventListener('DOMContentLoaded', function() {
-      if (document.getElementById('simatkul-swagger-nav')) return;
-      const nav = document.createElement('div');
-      nav.id = 'simatkul-swagger-nav';
-      nav.style.cssText = 'background:#0a0e17; border-bottom:1px solid #1e293b; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; font-family:"Plus Jakarta Sans", -apple-system, sans-serif; font-size:13px; color:#f8fafc; z-index:9999; flex-wrap:wrap; gap:12px;';
-      nav.innerHTML = \`
-        <div style="display:flex; align-items:center; gap:8px; font-weight:700;">
-          <a href="/api-docs" style="color:#f8fafc; text-decoration:none; font-size:14px; letter-spacing:-0.01em;">SIMATKUL API Portal</a>
-          <span style="color:#475569;">/</span>
-          <span style="color:#94a3b8; font-weight:500;">Swagger UI</span>
-        </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <a href="/api-docs" style="color:#94a3b8; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #1e293b; background:#111722; font-weight:500; font-size:12px;">Portal & Error Docs</a>
-          <a href="/api-docs/auth" style="color:#94a3b8; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #1e293b; background:#111722; font-weight:500; font-size:12px;">Auth Module</a>
-          <a href="/api-docs/master-data" style="color:#94a3b8; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #1e293b; background:#111722; font-weight:500; font-size:12px;">Master Data Module</a>
-          <a href="/api-docs/all" style="color:#f8fafc; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #334155; background:#1e293b; font-weight:600; font-size:12px;">Semua Modul</a>
-        </div>
-      \`;
-      document.body.insertBefore(nav, document.body.firstChild);
-    });
-  `);
+  res.type("application/javascript").send(customNavScript);
 });
 
 const customCss = `
@@ -48,37 +36,30 @@ const swaggerOptions = {
   displayRequestDuration: true,
 };
 
+const createSwaggerUiOptions = (siteTitle) => ({
+  customCss,
+  customCssUrl: SWAGGER_CSS_URL,
+  customJs: SWAGGER_JS_URLS,
+  customSiteTitle: siteTitle,
+  swaggerOptions,
+});
+
 swaggerRouter.use(
   "/auth",
-  swaggerUi.serveFiles(authSwaggerDoc),
-  swaggerUi.setup(authSwaggerDoc, {
-    customCss,
-    customJs: "/api-docs/custom-nav.js",
-    customSiteTitle: "SIMATKUL API - Auth Module",
-    swaggerOptions,
-  })
+  swaggerUi.serve,
+  swaggerUi.setup(authSwaggerDoc, createSwaggerUiOptions("SIMATKUL API - Auth Module"))
 );
 
 swaggerRouter.use(
   "/master-data",
-  swaggerUi.serveFiles(masterDataSwaggerDoc),
-  swaggerUi.setup(masterDataSwaggerDoc, {
-    customCss,
-    customJs: "/api-docs/custom-nav.js",
-    customSiteTitle: "SIMATKUL API - Master Data Module",
-    swaggerOptions,
-  })
+  swaggerUi.serve,
+  swaggerUi.setup(masterDataSwaggerDoc, createSwaggerUiOptions("SIMATKUL API - Master Data Module"))
 );
 
 swaggerRouter.use(
   "/all",
-  swaggerUi.serveFiles(combinedSwaggerDoc),
-  swaggerUi.setup(combinedSwaggerDoc, {
-    customCss,
-    customJs: "/api-docs/custom-nav.js",
-    customSiteTitle: "SIMATKUL API - All Modules",
-    swaggerOptions,
-  })
+  swaggerUi.serve,
+  swaggerUi.setup(combinedSwaggerDoc, createSwaggerUiOptions("SIMATKUL API - All Modules"))
 );
 
 swaggerRouter.get("/", (req, res) => {

@@ -27,4 +27,6 @@ app.use(errorMiddleware)
 app.listen(PORT, async() => {
     console.log(`Listening To http://localhost:${PORT}`)
     console.log(`Swagger Docs available at http://localhost:${PORT}/api-docs`)
-})
+})
+
+export default app;
