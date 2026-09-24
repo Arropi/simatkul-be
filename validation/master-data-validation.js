@@ -24,6 +24,7 @@ export function idParamValidation(req, res, next) {
 
 // Middleware validasi Kurikulum ID Parameter jika ada
 export function kurikulumParamValidation(req, res, next) {
+  
   if (req.params.kurikulumId !== undefined) {
     const id = Number(req.params.kurikulumId);
     if (!req.params.kurikulumId || isNaN(id) || !Number.isInteger(id) || id <= 0) {
@@ -38,17 +39,13 @@ export function kurikulumParamValidation(req, res, next) {
 // === DOSEN ===
 export const dosenSchema = z.object({
   nama: z.string().min(1, "Field nama tidak boleh kosong"),
-  nidn: z.string().min(1, "Field nidn tidak boleh kosong"),
-  jabatan_akademik: z.string().optional(),
-  jabatanAkademik: z.string().optional(),
-  kurikulum_id: z.coerce.number().int().positive().optional(),
-  kurikulumId: z.coerce.number().int().positive().optional(),
+  nidn: z.string().min(1, "Field nidn tidak boleh kosong").optional(),
+  jabatan_akademik: z.string().optional()
 }).refine(
-  (data) => (data.jabatan_akademik && data.jabatan_akademik.trim().length > 0) ||
-            (data.jabatanAkademik && data.jabatanAkademik.trim().length > 0),
+  (data) => (data.nama && data.nama.trim().length > 0),
   {
-    message: "Field jabatan_akademik tidak boleh kosong",
-    path: ["jabatan_akademik"],
+    message: "Field nama tidak boleh kosong",
+    path: ["nama"],
   }
 );
 
@@ -72,30 +69,17 @@ export const kelasSchema = z.object({
     error: () => "Prodi harus salah satu dari: TRI, TRPL, TRIK, TRE",
   }),
   semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
-  kelas_teori: z.coerce.number().int().min(0, "kelas_teori harus berupa angka minimal 0").optional(),
-  kelasTeori: z.coerce.number().int().min(0).optional(),
-  kelas_praktikum: z.coerce.number().int().min(0, "kelas_praktikum harus berupa angka minimal 0").optional(),
-  kelasPraktikum: z.coerce.number().int().min(0).optional(),
-  jumlah_kelas: z.coerce.number().int().min(1).max(4).optional(),
-  jumlahKelas: z.coerce.number().int().min(1).max(4).optional(),
-  kelas: z.string().optional(),
+  kelas_teori: z.coerce.number().int().min(1, "kelas_teori harus berupa angka minimal 0"),
+  kelas_praktikum: z.coerce.number().int().min(1, "kelas_praktikum harus berupa angka minimal 0"),
   kode_kelas: z.string().optional(),
-  kodeKelas: z.string().optional(),
-  kurikulum_id: z.coerce.number().int().positive().optional(),
-  kurikulumId: z.coerce.number().int().positive().optional(),
 }).refine(
   (data) => {
-    const hasTeori = data.kelas_teori !== undefined || data.kelasTeori !== undefined;
-    const hasPraktikum = data.kelas_praktikum !== undefined || data.kelasPraktikum !== undefined;
-    const hasJumlah = data.jumlah_kelas !== undefined || data.jumlahKelas !== undefined;
-    if (hasTeori || hasPraktikum || hasJumlah) {
+    const hasTeori = data.kelas_teori !== undefined
+    const hasPraktikum = data.kelas_praktikum !== undefined
+    if (hasTeori && hasPraktikum && data.semester) {
       return true;
     }
-    return Boolean(
-      data.kelas &&
-      ((data.kode_kelas && data.kode_kelas.trim().length > 0) ||
-       (data.kodeKelas && data.kodeKelas.trim().length > 0))
-    );
+    return false
   },
   {
     message: "Field kelas_teori dan kelas_praktikum wajib diisi",
@@ -121,10 +105,10 @@ export const updateKelasSchema = z.object({
   prodi: z.enum(["TRI", "TRPL", "TRIK", "TRE"], {
     error: () => "Prodi harus salah satu dari: TRI, TRPL, TRIK, TRE",
   }).optional(),
-  semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1").optional(),
-  kelas: z.string().min(1, "Field kelas tidak boleh kosong").optional(),
+  semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
+  kelas_teori: z.coerce.number().int().min(1, "kelas_teori harus berupa angka minimal 0"),
+  kelas_praktikum: z.coerce.number().int().min(1, "kelas_praktikum harus berupa angka minimal 0"),
   kode_kelas: z.string().optional(),
-  kodeKelas: z.string().optional(),
 });
 
 export function updateKelasValidation(req, res, next) {
@@ -189,13 +173,10 @@ export const mataKuliahSchema = z.object({
     error: () => "Kelompok harus 'Teori' atau 'Praktikum'",
   }),
   tipe_kelas: z.string().optional(),
-  tipeKelas: z.string().optional(),
-  semester: z.coerce.number().int().min(1, "Semester minimal 1"),
-  kurikulum_id: z.coerce.number().int().positive().optional(),
-  kurikulumId: z.coerce.number().int().positive().optional(),
+  semester: z.coerce.number().int().min(1, "Semester minimal 1")
 }).refine(
   (data) => {
-    const val = data.tipe_kelas || data.tipeKelas;
+    const val = data.tipe_kelas;
     return val === "MKK" || val === "MKDU";
   },
   {

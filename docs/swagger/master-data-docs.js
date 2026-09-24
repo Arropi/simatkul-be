@@ -1041,105 +1041,13 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
           },
         },
       },
-      put: {
-        tags: ["Kelas"],
-        summary: "Perbarui data kelas",
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            schema: { type: "integer" },
-            description: "ID kelas",
-            example: 1,
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/UpdateKelasRequest" },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: "Data kelas berhasil diperbarui",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string", example: "Data kelas berhasil diperbarui" },
-                    data: { $ref: "#/components/schemas/Kelas" },
-                  },
-                },
-              },
-            },
-          },
-          400: {
-            description: "Validasi gagal",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-          404: {
-            description: "Kelas tidak ditemukan",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
-      delete: {
-        tags: ["Kelas"],
-        summary: "Hapus data kelas",
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            schema: { type: "integer" },
-            description: "ID kelas",
-            example: 1,
-          },
-        ],
-        responses: {
-          200: {
-            description: "Kelas berhasil dihapus",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string", example: "Data kelas berhasil dihapus" },
-                    data: { $ref: "#/components/schemas/Kelas" },
-                  },
-                },
-              },
-            },
-          },
-          404: {
-            description: "Kelas tidak ditemukan",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
     },
     "/api/master-data/kelas/{kurikulumId}": {
       post: {
         tags: ["Kelas"],
-        summary: "Tambah data kelas (generate otomatis berdasarkan rombel)",
+        summary: "Tambah data kelas (generate otomatis teori & praktikum)",
         description:
-          "Membuat rombel kelas secara otomatis (misal Kelas A, B, Praktikum A1, A2) berdasarkan konfigurasi `kelas_teori`, `kelas_praktikum`, dan `jumlah_kelas`.",
+          "Membuat rombel kelas teori dan praktikum secara otomatis berdasarkan prodi, semester, `kelas_teori`, dan `kelas_praktikum`.",
         parameters: [
           {
             name: "kurikulumId",
@@ -1168,10 +1076,8 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
                   properties: {
                     message: { type: "string", example: "Data kelas berhasil ditambahkan" },
                     data: {
-                      oneOf: [
-                        { $ref: "#/components/schemas/Kelas" },
-                        { type: "array", items: { $ref: "#/components/schemas/Kelas" } },
-                      ],
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Kelas" },
                     },
                   },
                 },
@@ -1188,6 +1094,137 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
           },
           404: {
             description: "Kurikulum tidak ditemukan",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ["Kelas"],
+        summary: "Perbarui data kelas berdasarkan semester dan kurikulum ID",
+        description:
+          "Menghapus seluruh kelas pada semester dan kurikulum ID tersebut, kemudian membuat ulang sesuai konfigurasi baru.",
+        parameters: [
+          {
+            name: "kurikulumId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            description: "ID kurikulum",
+            example: 1,
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateKelasRequest" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Data kelas berhasil diperbarui",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Data kelas berhasil diperbarui" },
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Kelas" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Validasi gagal",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          404: {
+            description: "Kurikulum atau data kelas tidak ditemukan",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ["Kelas"],
+        summary: "Hapus data kelas berdasarkan semester dan kurikulum ID",
+        description:
+          "Menghapus seluruh kelas yang terkait dengan semester dan kurikulum ID yang ditentukan.",
+        parameters: [
+          {
+            name: "kurikulumId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            description: "ID kurikulum",
+            example: 1,
+          },
+          {
+            name: "semester",
+            in: "query",
+            required: false,
+            schema: { type: "integer" },
+            description: "Semester kelas yang akan dihapus (dapat dikirim via query atau body)",
+            example: 1,
+          },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  semester: { type: "integer", example: 1, description: "Semester kelas yang akan dihapus" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Kelas berhasil dihapus",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Data kelas berhasil dihapus" },
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Kelas" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Parameter semester tidak valid atau tidak disediakan",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          404: {
+            description: "Kelas tidak ditemukan",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -1871,22 +1908,22 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       },
       CreateKelasRequest: {
         type: "object",
-        required: ["prodi", "semester"],
+        required: ["prodi", "semester", "kelas_teori", "kelas_praktikum"],
         properties: {
           prodi: { type: "string", enum: ["TRI", "TRPL", "TRIK", "TRE"], example: "TRPL" },
-          semester: { type: "integer", minimum: 1, example: 1 },
-          kelas_teori: { type: "integer", minimum: 0, example: 2, description: "Jumlah kelas rombel teori (misal: 2 = Kelas A & B)" },
-          kelas_praktikum: { type: "integer", minimum: 0, example: 2, description: "Jumlah rombel praktikum per kelas teori (misal: A1, A2, B1, B2)" },
-          jumlah_kelas: { type: "integer", minimum: 1, maximum: 4, example: 2, description: "Jumlah kelas alternatif jika kelas_teori tidak spesifik" },
+          semester: { type: "integer", minimum: 1, example: 4 },
+          kelas_teori: { type: "integer", minimum: 1, example: 2, description: "Jumlah kelas rombel teori (misal: 2 = AA & BB)" },
+          kelas_praktikum: { type: "integer", minimum: 1, example: 4, description: "Jumlah rombel praktikum (misal: 4 = A1, A2, B1, B2)" },
         },
       },
       UpdateKelasRequest: {
         type: "object",
+        required: ["semester", "kelas_teori", "kelas_praktikum"],
         properties: {
-          prodi: { type: "string", enum: ["TRI", "TRPL", "TRIK", "TRE"], example: "TRPL" },
-          semester: { type: "integer", minimum: 1, example: 1 },
-          kelas: { type: "string", example: "B" },
-          kode_kelas: { type: "string", example: "TRPL-1B" },
+          prodi: { type: "string", enum: ["TRI", "TRPL", "TRIK", "TRE"], example: "TRPL", description: "Opsional jika sudah ada data kelas sebelumnya" },
+          semester: { type: "integer", minimum: 1, example: 4 },
+          kelas_teori: { type: "integer", minimum: 1, example: 2, description: "Jumlah kelas rombel teori (misal: 2 = AA & BB)" },
+          kelas_praktikum: { type: "integer", minimum: 1, example: 4, description: "Jumlah rombel praktikum (misal: 4 = A1, A2, B1, B2)" },
         },
       },
 

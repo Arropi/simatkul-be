@@ -8,11 +8,7 @@ export async function getAllDosenService(kurikulumId) {
 
 export async function getDosenByKurikulumIdService(kurikulumId) {
   const parsedKurikulumId = Number(kurikulumId);
-  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
-    const error = new Error("Parameter kurikulum_id harus berupa angka integer positif");
-    error.statusCode = 400;
-    throw error;
-  }
+
   return await dosenRepo.getAllDosen(parsedKurikulumId);
 }
 
@@ -27,17 +23,7 @@ export async function getDosenByIdService(id) {
 }
 
 export async function createDosenService(payload, kurikulumId) {
-  const parsedKurikulumId = Number(
-    kurikulumId ||
-    payload.kurikulum_id ||
-    payload.kurikulumId
-  );
-
-  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
-    const error = new Error("Parameter kurikulum_id wajib diisi");
-    error.statusCode = 400;
-    throw error;
-  }
+  const parsedKurikulumId = Number(kurikulumId);
 
   // Validasi kurikulum di database
   const kurikulumData = await kurikulumRepo.getKurikulumById(parsedKurikulumId);
@@ -48,9 +34,7 @@ export async function createDosenService(payload, kurikulumId) {
   }
 
   const data = {
-    nama: payload.nama.trim(),
-    nidn: payload.nidn.trim(),
-    jabatan_akademik: (payload.jabatan_akademik || payload.jabatanAkademik).trim(),
+    nama: payload.nama.trim()
   };
 
   const created = await dosenRepo.createDosen(data);
@@ -65,8 +49,8 @@ export async function updateDosenService(id, payload) {
   const data = {};
   if (payload.nama !== undefined) data.nama = payload.nama.trim();
   if (payload.nidn !== undefined) data.nidn = payload.nidn.trim();
-  if (payload.jabatan_akademik !== undefined || payload.jabatanAkademik !== undefined) {
-    data.jabatan_akademik = (payload.jabatan_akademik || payload.jabatanAkademik).trim();
+  if (payload.jabatan_akademik !== undefined) {
+    data.jabatan_akademik = (payload.jabatan_akademik).trim();
   }
 
   return await dosenRepo.updateDosen(id, data);

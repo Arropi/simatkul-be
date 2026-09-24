@@ -1,8 +1,17 @@
 import * as kelasRepo from "../../repositories/master-data/kelas-repository.js";
 import * as kurikulumRepo from "../../repositories/master-data/kurikulum-repository.js";
 
+export const PRODI_ABBR = {
+  TRPL: "PL",
+  TRIK: "IK",
+  TRI: "RI",
+  TRE: "RE",
+};
+
 export function getNamaKelasList(jumlahKelas) {
   switch (jumlahKelas) {
+    case 0:
+      return [];
     case 1:
       return ["AB"];
     case 2:
@@ -16,9 +25,60 @@ export function getNamaKelasList(jumlahKelas) {
   }
 }
 
-export async function getAllKelasService(kurikulumId) {
-  const parsedKurikulumId = kurikulumId ? Number(kurikulumId) : undefined;
-  return await kelasRepo.getAllKelas(parsedKurikulumId);
+export function generateKelasItems(prodi, semester, kelasTeori, kelasPraktikum) {
+  const teori = Number(kelasTeori || 0);
+  const praktikum = Number(kelasPraktikum || 0);
+
+  if (teori <= 0 && praktikum <= 0) {
+    const error = new Error("Minimal salah satu dari kelas_teori atau kelas_praktikum harus lebih dari 0");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const prodiUpper = prodi.trim().toUpperCase();
+  const abbr = PRODI_ABBR[prodiUpper] || prodiUpper;
+
+  const items = [];
+
+  if (teori > 0) {
+    const namaTeoriList = getNamaKelasList(teori);
+    if (!namaTeoriList) {
+      const error = new Error(`Jumlah kelas teori ${teori} tidak valid. Jumlah kelas yang didukung adalah 1, 2, 3, atau 4`);
+      error.statusCode = 400;
+      throw error;
+    }
+    for (const namaKelas of namaTeoriList) {
+      items.push({
+        prodi: prodiUpper,
+        semester,
+        kelas: namaKelas,
+        kode_kelas: `${abbr}${semester}${namaKelas}`,
+      });
+    }
+  }
+
+  if (praktikum > 0) {
+    const namaPraktikumList = getNamaKelasList(praktikum);
+    if (!namaPraktikumList) {
+      const error = new Error(`Jumlah kelas praktikum ${praktikum} tidak valid. Jumlah kelas yang didukung adalah 1, 2, 3, atau 4`);
+      error.statusCode = 400;
+      throw error;
+    }
+    for (const namaKelas of namaPraktikumList) {
+      items.push({
+        prodi: prodiUpper,
+        semester,
+        kelas: namaKelas,
+        kode_kelas: `${abbr}${semester}${namaKelas}`,
+      });
+    }
+  }
+
+  return items;
+}
+
+export async function getAllKelasService() {
+  return await kelasRepo.getAllKelas();
 }
 
 export async function getKelasByKurikulumIdService(kurikulumId) {
@@ -28,7 +88,7 @@ export async function getKelasByKurikulumIdService(kurikulumId) {
     error.statusCode = 400;
     throw error;
   }
-  return await kelasRepo.getAllKelas(parsedKurikulumId);
+  return await kelasRepo.getAllKelasByKurikulum(parsedKurikulumId);
 }
 
 export async function getKelasByIdService(id) {
@@ -42,11 +102,7 @@ export async function getKelasByIdService(id) {
 }
 
 export async function createKelasService(payload, kurikulumId) {
-  const parsedKurikulumId = Number(
-    kurikulumId ||
-    payload.kurikulum_id ||
-    payload.kurikulumId
-  );
+  const parsedKurikulumId = Number(kurikulumId);
 
   if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
     const error = new Error("Parameter kurikulum_id wajib diisi");
@@ -54,7 +110,6 @@ export async function createKelasService(payload, kurikulumId) {
     throw error;
   }
 
-  // 1. Cek data kurikulum di database
   const kurikulumData = await kurikulumRepo.getKurikulumById(parsedKurikulumId);
   if (!kurikulumData) {
     const error = new Error(`Data kurikulum dengan ID ${parsedKurikulumId} tidak ditemukan`);
@@ -62,14 +117,6 @@ export async function createKelasService(payload, kurikulumId) {
     throw error;
   }
 
-  // 2. Validasinya cek di file service semester ada ngga
-  if (!kurikulumData.semester) {
-    const error = new Error("Data semester pada kurikulum tidak ditemukan");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  // 3. Kalau ada cek lagi kalau ganjil ga boleh semester yang genap begitupun sebaliknya
   const kurikulumSemester = kurikulumData.semester.trim().toLowerCase();
   const isKurikulumGanjil = kurikulumSemester.includes("ganjil");
   const isKurikulumGenap = kurikulumSemester.includes("genap");
@@ -96,85 +143,116 @@ export async function createKelasService(payload, kurikulumId) {
     throw error;
   }
 
-  const praktikum = Number(payload.kelas_praktikum ?? payload.kelasPraktikum ?? 0);
-  const teori = Number(payload.kelas_teori ?? payload.kelasTeori ?? 0);
-  const jumlahExplicit = (payload.jumlah_kelas !== undefined || payload.jumlahKelas !== undefined)
-    ? Number(payload.jumlah_kelas ?? payload.jumlahKelas)
-    : undefined;
+  const items = generateKelasItems(
+    payload.prodi,
+    inputSemester,
+    payload.kelas_teori,
+    payload.kelas_praktikum
+  );
 
-  // Mendukung payload format lama jika dikirim secara eksplisit kelas & kode_kelas
-  if (
-    jumlahExplicit === undefined &&
-    praktikum === 0 &&
-    teori === 0 &&
-    payload.kelas &&
-    (payload.kode_kelas || payload.kodeKelas)
-  ) {
-    const data = {
-      prodi: payload.prodi.trim(),
-      semester: inputSemester,
-      kelas: payload.kelas.trim(),
-      kode_kelas: (payload.kode_kelas || payload.kodeKelas).trim(),
-    };
-    const created = await kelasRepo.createKelas(data);
-    await kelasRepo.linkKurikulumKelas(parsedKurikulumId, created.id);
-    return created;
-  }
+  const createdClasses = await kelasRepo.createKelasBatch(items);
+  const links = createdClasses.map((c) => ({
+    kurikulum_id: parsedKurikulumId,
+    kelas_id: c.id,
+  }));
+  await kelasRepo.linkKurikulumKelasBatch(links);
 
-  // Menentukan jumlah kelas:
-  // 1. Jika eksplisit jumlah_kelas diisi, gunakan itu
-  // 2. Jika kelas_praktikum > 0, gunakan kelas_praktikum
-  // 3. Jika hanya kelas_teori yang diisi, gunakan kelas_teori
-  // 4. Jika keduanya diisi, praktikum diprioritaskan atau max dari keduanya
-  let jumlahKelas = jumlahExplicit !== undefined
-    ? jumlahExplicit
-    : (praktikum > 0 ? praktikum : (teori > 0 ? teori : Math.max(praktikum, teori)));
+  return createdClasses;
+}
 
-  const namaKelasList = getNamaKelasList(jumlahKelas);
-  if (!namaKelasList) {
-    const error = new Error(`Jumlah kelas ${jumlahKelas} tidak valid. Jumlah kelas yang didukung adalah 1, 2, 3, atau 4`);
+export async function updateKelasService(kurikulumId, payload) {
+  const parsedKurikulumId = Number(kurikulumId);
+
+  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
+    const error = new Error("Parameter kurikulum_id wajib diisi");
     error.statusCode = 400;
     throw error;
   }
 
-  const prodi = payload.prodi.trim();
-  const createdList = [];
-
-  for (const namaKelas of namaKelasList) {
-    const data = {
-      prodi,
-      semester: inputSemester,
-      kelas: namaKelas,
-      kode_kelas: namaKelas,
-    };
-    const created = await kelasRepo.createKelas(data);
-    await kelasRepo.linkKurikulumKelas(parsedKurikulumId, created.id);
-    createdList.push(created);
+  const kurikulumData = await kurikulumRepo.getKurikulumById(parsedKurikulumId);
+  if (!kurikulumData) {
+    const error = new Error(`Data kurikulum dengan ID ${parsedKurikulumId} tidak ditemukan`);
+    error.statusCode = 404;
+    throw error;
   }
 
-  return createdList;
-}
-
-export async function updateKelasService(id, payload) {
-  await getKelasByIdService(id);
-
-  const data = {};
-  if (payload.prodi !== undefined) data.prodi = payload.prodi.trim();
-  if (payload.semester !== undefined) data.semester = Number(payload.semester);
-  if (payload.kelas !== undefined) data.kelas = payload.kelas.trim();
-  if (payload.kode_kelas !== undefined || payload.kodeKelas !== undefined) {
-    data.kode_kelas = (payload.kode_kelas || payload.kodeKelas).trim();
+  const inputSemester = Number(payload.semester);
+  if (isNaN(inputSemester) || inputSemester <= 0) {
+    const error = new Error("Semester harus berupa angka positif minimal 1");
+    error.statusCode = 400;
+    throw error;
   }
 
-  return await kelasRepo.updateKelas(id, data);
+  const kurikulumSemester = kurikulumData.semester.trim().toLowerCase();
+  const isKurikulumGanjil = kurikulumSemester.includes("ganjil");
+  const isKurikulumGenap = kurikulumSemester.includes("genap");
+  const isInputGanjil = inputSemester % 2 !== 0;
+  const isInputGenap = inputSemester % 2 === 0;
+
+  if (isKurikulumGanjil && isInputGenap) {
+    const error = new Error("Kurikulum semester ganjil tidak boleh memiliki kelas dengan semester genap");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (isKurikulumGenap && isInputGanjil) {
+    const error = new Error("Kurikulum semester genap tidak boleh memiliki kelas dengan semester ganjil");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing = await kelasRepo.getKelasByKurikulumAndSemester(parsedKurikulumId, inputSemester);
+  if (!existing || existing.length === 0) {
+    const error = new Error(`Data kelas untuk kurikulum ID ${parsedKurikulumId} dan semester ${inputSemester} tidak ditemukan`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const prodi = payload.prodi ? payload.prodi.trim() : existing[0].prodi;
+
+  const items = generateKelasItems(
+    prodi,
+    inputSemester,
+    payload.kelas_teori,
+    payload.kelas_praktikum
+  );
+
+  // Hapus semua kelas yang sudah terbuat pada semester dan kurikulumId tersebut
+  await kelasRepo.deleteKelasByKurikulumAndSemester(parsedKurikulumId, inputSemester);
+
+  // Buat kelas baru sesuai konfigurasi
+  const createdClasses = await kelasRepo.createKelasBatch(items);
+  const links = createdClasses.map((c) => ({
+    kurikulum_id: parsedKurikulumId,
+    kelas_id: c.id,
+  }));
+  await kelasRepo.linkKurikulumKelasBatch(links);
+
+  return createdClasses;
 }
 
-export async function deleteKelasService(id) {
-  const deleted = await kelasRepo.deleteKelas(id);
-  if (!deleted) {
-    const error = new Error(`Data kelas dengan ID ${id} tidak ditemukan`);
+export async function deleteKelasService(kurikulumId, semester) {
+  const parsedKurikulumId = Number(kurikulumId);
+  const parsedSemester = Number(semester);
+
+  if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
+    const error = new Error("Parameter kurikulum_id harus berupa angka integer positif");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!parsedSemester || isNaN(parsedSemester) || parsedSemester <= 0) {
+    const error = new Error("Parameter semester harus berupa angka integer positif");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const deleted = await kelasRepo.deleteKelasByKurikulumAndSemester(parsedKurikulumId, parsedSemester);
+  if (!deleted || deleted.length === 0) {
+    const error = new Error(`Data kelas untuk kurikulum ID ${parsedKurikulumId} dan semester ${parsedSemester} tidak ditemukan`);
     error.statusCode = 404;
     throw error;
   }
   return deleted;
 }
+

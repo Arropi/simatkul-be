@@ -65,11 +65,6 @@ export async function updateKurikulum(id, data) {
 }
 
 export async function deleteKurikulum(id) {
-  await db.delete(kurikulumDosen).where(eq(kurikulumDosen.kurikulum_id, id));
-  await db.delete(kurikulumRuang).where(eq(kurikulumRuang.kurikulum_id, id));
-  await db.delete(kurikulumKelas).where(eq(kurikulumKelas.kurikulum_id, id));
-  await db.delete(kurikulumMataKuliah).where(eq(kurikulumMataKuliah.kurikulum_id, id));
-  await db.delete(kurikulumSesi).where(eq(kurikulumSesi.kurikulum_id, id));
   const result = await db.delete(kurikulum).where(eq(kurikulum.id, id)).returning();
   return result[0] || null;
 }

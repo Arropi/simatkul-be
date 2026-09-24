@@ -2,8 +2,7 @@ import * as kelasService from "../../services/master-data/kelas-service.js";
 
 export async function getAllKelas(req, res, next) {
   try {
-    const kurikulumId = req.query.kurikulum_id || req.query.kurikulumId;
-    const data = await kelasService.getAllKelasService(kurikulumId);
+    const data = await kelasService.getAllKelasService();
     res.status(200).json({
       message: "Data kelas berhasil diambil",
       data,
@@ -41,13 +40,7 @@ export async function getKelasById(req, res, next) {
 
 export async function createKelas(req, res, next) {
   try {
-    const kurikulumId =
-      req.params.kurikulumId ||
-      req.params.kurikulum_id ||
-      req.body.kurikulum_id ||
-      req.body.kurikulumId ||
-      req.query.kurikulum_id ||
-      req.query.kurikulumId;
+    const kurikulumId = req.params.kurikulumId
 
     const data = await kelasService.createKelasService(req.body, kurikulumId);
     res.status(201).json({
@@ -61,8 +54,8 @@ export async function createKelas(req, res, next) {
 
 export async function updateKelas(req, res, next) {
   try {
-    const id = Number(req.params.id);
-    const data = await kelasService.updateKelasService(id, req.body);
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await kelasService.updateKelasService(kurikulumId, req.body);
     res.status(200).json({
       message: "Data kelas berhasil diperbarui",
       data,
@@ -74,8 +67,20 @@ export async function updateKelas(req, res, next) {
 
 export async function deleteKelas(req, res, next) {
   try {
-    const id = Number(req.params.id);
-    const data = await kelasService.deleteKelasService(id);
+    const kurikulumId = Number(req.params.kurikulumId);
+    const semesterVal = req.body?.semester !== undefined ? req.body.semester : req.query?.semester;
+    if (semesterVal === undefined || semesterVal === null || semesterVal === "") {
+      const err = new Error("Parameter semester wajib diisi");
+      err.statusCode = 400;
+      return next(err);
+    }
+    const semester = Number(semesterVal);
+    if (isNaN(semester) || semester <= 0) {
+      const err = new Error("Parameter semester harus berupa angka integer positif");
+      err.statusCode = 400;
+      return next(err);
+    }
+    const data = await kelasService.deleteKelasService(kurikulumId, semester);
     res.status(200).json({
       message: "Data kelas berhasil dihapus",
       data,

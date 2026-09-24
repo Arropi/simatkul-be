@@ -74,35 +74,56 @@ export const sesi = pgTable("sesi", {
 // Tabel Relasi Kurikulum - Mata Kuliah
 export const kurikulumMataKuliah = pgTable("kurikulum_mata_kuliah", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-  kurikulum_id: bigint("kurikulum_id", { mode: "number" }).notNull(),
-  mata_kuliah_id: bigint("mata_kuliah_id", { mode: "number" }).notNull(),
+  kurikulum_id: bigint("kurikulum_id", { mode: "number" })
+    .notNull()
+    .references(() => kurikulum.id, { onDelete: "cascade" }),
+  mata_kuliah_id: bigint("mata_kuliah_id", { mode: "number" })
+    .notNull()
+    .references(() => mataKuliah.id, { onDelete: "cascade" }),
 });
 
 // Tabel Relasi Kurikulum - Sesi
 export const kurikulumSesi = pgTable("kurikulum_sesi", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-  kurikulum_id: bigint("kurikulum_id", { mode: "number" }).notNull(),
-  sesi_id: bigint("sesi_id", { mode: "number" }).notNull(),
+  kurikulum_id: bigint("kurikulum_id", { mode: "number" })
+    .notNull()
+    .references(() => kurikulum.id, { onDelete: "cascade" }),
+  sesi_id: bigint("sesi_id", { mode: "number" })
+    .notNull()
+    .references(() => sesi.id, { onDelete: "cascade" }),
 });
 
 // Tabel Relasi Kurikulum - Dosen
 export const kurikulumDosen = pgTable("kurikulum_dosen", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-  kurikulum_id: bigint("kurikulum_id", { mode: "number" }).notNull(),
-  dosen_id: bigint("dosen_id", { mode: "number" }).notNull(),
+  kurikulum_id: bigint("kurikulum_id", { mode: "number" })
+    .notNull()
+    .references(() => kurikulum.id, { onDelete: "cascade" }),
+  dosen_id: bigint("dosen_id", { mode: "number" })
+    .notNull()
+    .references(() => dosen.id, { onDelete: "cascade" }),
 });
 
 // Tabel Relasi Kurikulum - Kelas
 export const kurikulumKelas = pgTable("kurikulum_kelas", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-  kurikulum_id: bigint("kurikulum_id", { mode: "number" }).notNull(),
-  kelas_id: bigint("kelas_id", { mode: "number" }).notNull(),
+  kurikulum_id: bigint("kurikulum_id", { mode: "number" })
+    .notNull()
+    .references(() => kurikulum.id, { onDelete: "cascade" }),
+  kelas_id: bigint("kelas_id", { mode: "number" })
+    .notNull()
+    .references(() => kelas.id, { onDelete: "cascade" }),
 });
 
 // Tabel Relasi Kurikulum - Ruang
 export const kurikulumRuang = pgTable("kurikulum_ruang", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-  kurikulum_id: bigint("kurikulum_id", { mode: "number" }).notNull(),
-  ruang_id: bigint("ruang_id", { mode: "number" }).notNull(),
+  kurikulum_id: bigint("kurikulum_id", { mode: "number" })
+    .notNull()
+    .references(() => kurikulum.id, { onDelete: "cascade" }),
+  ruang_id: bigint("ruang_id", { mode: "number" })
+    .notNull()
+    .references(() => ruang.id, { onDelete: "cascade" }),
 });
+
 

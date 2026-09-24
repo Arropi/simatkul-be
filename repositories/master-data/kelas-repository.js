@@ -1,8 +1,12 @@
-import { eq } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { db } from "../../config/database.js";
 import { kelas, kurikulumKelas } from "../../config/schema.js";
 
-export async function getAllKelas(kurikulumId) {
+export async function getAllKelas() {
+  return await db.select().from(kelas);
+}
+
+export async function getAllKelasByKurikulum(kurikulumId) {
   if (kurikulumId) {
     return await db
       .select({
@@ -24,9 +28,33 @@ export async function getKelasById(id) {
   return result[0] || null;
 }
 
+export async function getKelasByKurikulumAndSemester(kurikulumId, semester) {
+  return await db
+    .select({
+      id: kelas.id,
+      prodi: kelas.prodi,
+      semester: kelas.semester,
+      kelas: kelas.kelas,
+      kode_kelas: kelas.kode_kelas,
+    })
+    .from(kelas)
+    .innerJoin(kurikulumKelas, eq(kelas.id, kurikulumKelas.kelas_id))
+    .where(
+      and(
+        eq(kurikulumKelas.kurikulum_id, kurikulumId),
+        eq(kelas.semester, semester)
+      )
+    );
+}
+
 export async function createKelas(data) {
   const result = await db.insert(kelas).values(data).returning();
   return result[0];
+}
+
+export async function createKelasBatch(kelasList) {
+  if (!kelasList || kelasList.length === 0) return [];
+  return await db.insert(kelas).values(kelasList).returning();
 }
 
 export async function linkKurikulumKelas(kurikulumId, kelasId) {
@@ -40,8 +68,9 @@ export async function linkKurikulumKelas(kurikulumId, kelasId) {
   return result[0];
 }
 
-export async function unlinkKurikulumKelas(kelasId) {
-  return await db.delete(kurikulumKelas).where(eq(kurikulumKelas.kelas_id, kelasId)).returning();
+export async function linkKurikulumKelasBatch(links) {
+  if (!links || links.length === 0) return [];
+  return await db.insert(kurikulumKelas).values(links).returning();
 }
 
 export async function updateKelas(id, data) {
@@ -49,8 +78,24 @@ export async function updateKelas(id, data) {
   return result[0] || null;
 }
 
-export async function deleteKelas(id) {
-  await unlinkKurikulumKelas(id);
-  const result = await db.delete(kelas).where(eq(kelas.id, id)).returning();
+export async function deleteKelasByKurikulumAndSemester(kurikulumId, semester) {
+  const existing = await getKelasByKurikulumAndSemester(kurikulumId, semester);
+  if (!existing || existing.length === 0) {
+    return [];
+  }
+  const idsToDelete = existing.map((k) => k.id);
+  const deleted = await db
+    .delete(kelas)
+    .where(inArray(kelas.id, idsToDelete))
+    .returning();
+  return deleted;
+}
+
+export async function deleteKelas(kurikulumId, semester) {
+  if (semester !== undefined) {
+    return await deleteKelasByKurikulumAndSemester(kurikulumId, semester);
+  }
+  const result = await db.delete(kelas).where(eq(kelas.id, kurikulumId)).returning();
   return result[0] || null;
 }
+

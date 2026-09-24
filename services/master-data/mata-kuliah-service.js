@@ -81,9 +81,7 @@ export async function getMataKuliahByIdService(id) {
 
 export async function createMataKuliahService(payload, kurikulumId) {
   const parsedKurikulumId = Number(
-    kurikulumId ||
-    payload.kurikulum_id ||
-    payload.kurikulumId
+    kurikulumId
   );
 
   if (!parsedKurikulumId || isNaN(parsedKurikulumId) || parsedKurikulumId <= 0) {
@@ -132,7 +130,7 @@ export async function createMataKuliahService(payload, kurikulumId) {
     prodi: payload.prodi.trim(),
     jenis: payload.jenis.trim(),
     kelompok: payload.kelompok.trim(),
-    tipe_kelas: (payload.tipe_kelas || payload.tipeKelas).trim(),
+    tipe_kelas: (payload.tipe_kelas).trim(),
     semester: Number(payload.semester),
   };
 

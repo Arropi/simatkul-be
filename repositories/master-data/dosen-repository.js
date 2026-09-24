@@ -39,17 +39,12 @@ export async function linkKurikulumDosen(kurikulumId, dosenId) {
   return result[0];
 }
 
-export async function unlinkKurikulumDosen(dosenId) {
-  return await db.delete(kurikulumDosen).where(eq(kurikulumDosen.dosen_id, dosenId)).returning();
-}
-
 export async function updateDosen(id, data) {
   const result = await db.update(dosen).set(data).where(eq(dosen.id, id)).returning();
   return result[0] || null;
 }
 
 export async function deleteDosen(id) {
-  await unlinkKurikulumDosen(id);
   const result = await db.delete(dosen).where(eq(dosen.id, id)).returning();
   return result[0] || null;
 }

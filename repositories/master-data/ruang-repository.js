@@ -37,17 +37,12 @@ export async function linkKurikulumRuang(kurikulumId, ruangId) {
   return result[0];
 }
 
-export async function unlinkKurikulumRuang(ruangId) {
-  return await db.delete(kurikulumRuang).where(eq(kurikulumRuang.ruang_id, ruangId)).returning();
-}
-
 export async function updateRuang(id, data) {
   const result = await db.update(ruang).set(data).where(eq(ruang.id, id)).returning();
   return result[0] || null;
 }
 
 export async function deleteRuang(id) {
-  await unlinkKurikulumRuang(id);
   const result = await db.delete(ruang).where(eq(ruang.id, id)).returning();
   return result[0] || null;
 }

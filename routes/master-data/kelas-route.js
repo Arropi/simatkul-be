@@ -13,7 +13,7 @@ kelasRouter.get("/", kelasController.getAllKelas);
 kelasRouter.get("/kurikulum/:kurikulumId", kurikulumParamValidation, kelasController.getKelasByKurikulumId);
 kelasRouter.get("/:id", idParamValidation, kelasController.getKelasById);
 kelasRouter.post("/:kurikulumId", kurikulumParamValidation, kelasValidation, kelasController.createKelas);
-kelasRouter.put("/:id", idParamValidation, updateKelasValidation, kelasController.updateKelas);
-kelasRouter.delete("/:id", idParamValidation, kelasController.deleteKelas);
+kelasRouter.put("/:kurikulumId", kurikulumParamValidation, updateKelasValidation, kelasController.updateKelas);
+kelasRouter.delete("/:kurikulumId", kurikulumParamValidation, kelasController.deleteKelas);
 
 export default kelasRouter;

@@ -185,17 +185,12 @@ export async function linkKurikulumMataKuliah(kurikulumId, mataKuliahId) {
   return result[0];
 }
 
-export async function unlinkKurikulumMataKuliah(mataKuliahId) {
-  return await db.delete(kurikulumMataKuliah).where(eq(kurikulumMataKuliah.mata_kuliah_id, mataKuliahId)).returning();
-}
-
 export async function updateMataKuliah(id, data) {
   const result = await db.update(mataKuliah).set(data).where(eq(mataKuliah.id, id)).returning();
   return result[0] || null;
 }
 
 export async function deleteMataKuliah(id) {
-  await unlinkKurikulumMataKuliah(id);
   const result = await db.delete(mataKuliah).where(eq(mataKuliah.id, id)).returning();
   return result[0] || null;
 }

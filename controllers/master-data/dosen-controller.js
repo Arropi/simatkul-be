@@ -41,13 +41,7 @@ export async function getDosenById(req, res, next) {
 
 export async function createDosen(req, res, next) {
   try {
-    const kurikulumId =
-      req.params.kurikulumId ||
-      req.params.kurikulum_id ||
-      req.body.kurikulum_id ||
-      req.body.kurikulumId ||
-      req.query.kurikulum_id ||
-      req.query.kurikulumId;
+    const kurikulumId = Number(req.params.kurikulumId);
 
     const data = await dosenService.createDosenService(req.body, kurikulumId);
     res.status(201).json({
