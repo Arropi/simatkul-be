@@ -4,7 +4,14 @@ import { normalizeTimestamp, isStartTimeEarlier } from "../../utils/date-utils.j
 
 export async function getAllSesiService(kurikulumId) {
   const parsedKurikulumId = kurikulumId ? Number(kurikulumId) : undefined;
-  return await sesiRepo.getAllSesi(parsedKurikulumId);
+  const sesi = await sesiRepo.getAllSesi(parsedKurikulumId);
+  const data = sesi.map((s, index) => {
+    return {
+      nama: "Sesi " + (index + 1),
+      ...s,
+    };
+  });
+  return data;
 }
 
 export async function getSesiByKurikulumIdService(kurikulumId) {
@@ -14,7 +21,14 @@ export async function getSesiByKurikulumIdService(kurikulumId) {
     error.statusCode = 400;
     throw error;
   }
-  return await sesiRepo.getAllSesi(parsedKurikulumId);
+  const sesi = await sesiRepo.getAllSesi(parsedKurikulumId);
+  const data = sesi.map((s, index) => {
+    return {
+      nama: "Sesi " + (index + 1),
+      ...s,
+    };
+  });
+  return data;
 }
 
 export async function getSesiByIdService(id) {
@@ -72,12 +86,12 @@ export async function createSesiService(payload, kurikulumId) {
 export async function updateSesiService(id, payload) {
   const existing = await getSesiByIdService(id);
 
-  const rawStart = payload.jam_mulai !== undefined || payload.jamMulai !== undefined
-    ? (payload.jam_mulai || payload.jamMulai)
+  const rawStart = payload.jam_mulai !== undefined
+    ? payload.jam_mulai
     : existing.jam_mulai;
 
-  const rawEnd = payload.jam_akhir !== undefined || payload.jamAkhir !== undefined
-    ? (payload.jam_akhir || payload.jamAkhir)
+  const rawEnd = payload.jam_akhir !== undefined
+    ? payload.jam_akhir
     : existing.jam_akhir;
 
   // Validasi: jam_mulai tidak bisa lebih lama daripada jam_akhir
@@ -89,10 +103,10 @@ export async function updateSesiService(id, payload) {
 
   const data = {};
   if (payload.nama !== undefined) data.nama = Number(payload.nama);
-  if (payload.jam_mulai !== undefined || payload.jamMulai !== undefined) {
+  if (payload.jam_mulai !== undefined) {
     data.jam_mulai = normalizeTimestamp(rawStart);
   }
-  if (payload.jam_akhir !== undefined || payload.jamAkhir !== undefined) {
+  if (payload.jam_akhir !== undefined) {
     data.jam_akhir = normalizeTimestamp(rawEnd);
   }
 

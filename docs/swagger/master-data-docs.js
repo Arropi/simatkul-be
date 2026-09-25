@@ -1104,9 +1104,9 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       },
       put: {
         tags: ["Kelas"],
-        summary: "Perbarui data kelas berdasarkan semester dan kurikulum ID",
+        summary: "Perbarui data kelas berdasarkan from_semester dan to_semester",
         description:
-          "Menghapus seluruh kelas pada semester dan kurikulum ID tersebut, kemudian membuat ulang sesuai konfigurasi baru.",
+          "Menghapus seluruh kelas pada `from_semester` pada kurikulum ID tersebut, kemudian membuat ulang kelas sesuai konfigurasi baru pada `to_semester`.",
         parameters: [
           {
             name: "kurikulumId",
@@ -1918,10 +1918,11 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       },
       UpdateKelasRequest: {
         type: "object",
-        required: ["semester", "kelas_teori", "kelas_praktikum"],
+        required: ["from_semester", "to_semester", "kelas_teori", "kelas_praktikum"],
         properties: {
           prodi: { type: "string", enum: ["TRI", "TRPL", "TRIK", "TRE"], example: "TRPL", description: "Opsional jika sudah ada data kelas sebelumnya" },
-          semester: { type: "integer", minimum: 1, example: 4 },
+          from_semester: { type: "integer", minimum: 1, example: 4, description: "Semester kelas asal/lama yang akan diperbarui" },
+          to_semester: { type: "integer", minimum: 1, example: 4, description: "Semester kelas tujuan yang baru" },
           kelas_teori: { type: "integer", minimum: 1, example: 2, description: "Jumlah kelas rombel teori (misal: 2 = AA & BB)" },
           kelas_praktikum: { type: "integer", minimum: 1, example: 4, description: "Jumlah rombel praktikum (misal: 4 = A1, A2, B1, B2)" },
         },

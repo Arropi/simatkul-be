@@ -13,12 +13,18 @@ export function authMiddleware(req, res, next) {
         const token = authorization.split(" ")[1];
         const jwtDecode = jwt.verify(token, secretToken);
         req.user = jwtDecode;
-        next();
     } catch (error) {
         const err = new Error("Authorize failed");
         err.statusCode = 401;
-        next(err);
+        return next(err);
     }
+
+    if (req.user.role !== "admin") {
+        const error = new Error("Forbidden, you dont have access");
+        error.statusCode = 403;
+        return next(error);
+    }
+    next();
 }
 
 export default function roleMiddleware(req, res, next) {

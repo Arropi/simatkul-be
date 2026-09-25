@@ -5,14 +5,15 @@ import {
   idParamValidation,
   kurikulumParamValidation,
 } from "../../validation/master-data-validation.js";
+import { authMiddleware } from "../../middleware/auth-middleware.js";
 
 const sesiRouter = Router();
 
 sesiRouter.get("/", sesiController.getAllSesi);
 sesiRouter.get("/kurikulum/:kurikulumId", kurikulumParamValidation, sesiController.getSesiByKurikulumId);
 sesiRouter.get("/:id", idParamValidation, sesiController.getSesiById);
-sesiRouter.post("/:kurikulumId", kurikulumParamValidation, sesiValidation, sesiController.createSesi);
-sesiRouter.put("/:id", idParamValidation, sesiValidation, sesiController.updateSesi);
-sesiRouter.delete("/:id", idParamValidation, sesiController.deleteSesi);
+sesiRouter.post("/:kurikulumId", authMiddleware, kurikulumParamValidation, sesiValidation, sesiController.createSesi);
+sesiRouter.put("/:id", authMiddleware, idParamValidation, sesiValidation, sesiController.updateSesi);
+sesiRouter.delete("/:id", authMiddleware, idParamValidation, sesiController.deleteSesi);
 
 export default sesiRouter;

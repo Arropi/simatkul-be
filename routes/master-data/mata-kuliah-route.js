@@ -6,6 +6,7 @@ import {
   idParamValidation,
   kurikulumParamValidation,
 } from "../../validation/master-data-validation.js";
+import { authMiddleware } from "../../middleware/auth-middleware.js";
 
 const mataKuliahRouter = Router();
 
@@ -17,8 +18,8 @@ mataKuliahRouter.get(
   mataKuliahController.getMataKuliahByKurikulumId
 );
 mataKuliahRouter.get("/:id", idParamValidation, mataKuliahController.getMataKuliahById);
-mataKuliahRouter.post("/:kurikulumId", kurikulumParamValidation, mataKuliahValidation, mataKuliahController.createMataKuliah);
-mataKuliahRouter.put("/:id", idParamValidation, mataKuliahValidation, mataKuliahController.updateMataKuliah);
-mataKuliahRouter.delete("/:id", idParamValidation, mataKuliahController.deleteMataKuliah);
+mataKuliahRouter.post("/:kurikulumId", authMiddleware, kurikulumParamValidation, mataKuliahValidation, mataKuliahController.createMataKuliah);
+mataKuliahRouter.put("/:id", authMiddleware, idParamValidation, mataKuliahValidation, mataKuliahController.updateMataKuliah);
+mataKuliahRouter.delete("/:id", authMiddleware, idParamValidation, mataKuliahController.deleteMataKuliah);
 
 export default mataKuliahRouter;

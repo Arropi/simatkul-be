@@ -8,6 +8,10 @@ import {
   kurikulumKelas,
   kurikulumMataKuliah,
   kurikulumSesi,
+  dosen,
+  ruang,
+  mataKuliah,
+  sesi,
 } from "../../config/schema.js";
 
 // Relasi Kurikulum
@@ -72,91 +76,129 @@ export async function deleteKurikulum(id) {
 export async function copyKurikulumRelations(sourceKurikulumId, targetKurikulumId) {
   // 1. Copy kurikulum_dosen
   const dosenRelations = await db
-    .select({ dosen_id: kurikulumDosen.dosen_id })
-    .from(kurikulumDosen)
-    .where(eq(kurikulumDosen.kurikulum_id, sourceKurikulumId));
+    .insert(dosen)
+    .select(
+      db
+        .select({
+          nama: dosen.nama,
+          nidn: dosen.nidn,
+          jabatan_akademik: dosen.jabatan_akademik,
+        })
+        .from(kurikulumDosen)
+        .innerJoin(dosen, eq(kurikulumDosen.dosen_id, dosen.id))
+        .where(eq(kurikulumDosen.kurikulum_id, sourceKurikulumId))
+    )
+    .returning();
 
   if (dosenRelations.length > 0) {
     await db.insert(kurikulumDosen).values(
       dosenRelations.map((r) => ({
         kurikulum_id: targetKurikulumId,
-        dosen_id: r.dosen_id,
+        dosen_id: r.id,
       }))
     );
   }
 
   // 2. Copy kurikulum_ruang
   const ruangRelations = await db
-    .select({ ruang_id: kurikulumRuang.ruang_id })
-    .from(kurikulumRuang)
-    .where(eq(kurikulumRuang.kurikulum_id, sourceKurikulumId));
+    .insert(ruang)
+    .select(
+      db
+        .select({
+          nama: ruang.nama,
+        })
+        .from(kurikulumRuang)
+        .innerJoin(ruang, eq(kurikulumRuang.ruang_id, ruang.id))
+        .where(eq(kurikulumRuang.kurikulum_id, sourceKurikulumId))
+    )
+    .returning();
 
   if (ruangRelations.length > 0) {
     await db.insert(kurikulumRuang).values(
       ruangRelations.map((r) => ({
         kurikulum_id: targetKurikulumId,
-        ruang_id: r.ruang_id,
+        ruang_id: r.id,
       }))
     );
   }
 
   // 3. Copy kurikulum_mata_kuliah
   const mataKuliahRelations = await db
-    .select({ mata_kuliah_id: kurikulumMataKuliah.mata_kuliah_id })
-    .from(kurikulumMataKuliah)
-    .where(eq(kurikulumMataKuliah.kurikulum_id, sourceKurikulumId));
+    .insert(mataKuliah)
+    .select(
+      db
+        .select({
+          kode: mataKuliah.kode,
+          nama: mataKuliah.nama,
+          sks: mataKuliah.sks,
+          prodi: mataKuliah.prodi,
+          jenis: mataKuliah.jenis,
+          kelompok: mataKuliah.kelompok,
+          tipe_kelas: mataKuliah.tipe_kelas,
+          semester: mataKuliah.semester,
+        })
+        .from(kurikulumMataKuliah)
+        .innerJoin(mataKuliah, eq(kurikulumMataKuliah.mata_kuliah_id, mataKuliah.id))
+        .where(eq(kurikulumMataKuliah.kurikulum_id, sourceKurikulumId))
+    )
+    .returning();
 
   if (mataKuliahRelations.length > 0) {
     await db.insert(kurikulumMataKuliah).values(
       mataKuliahRelations.map((r) => ({
         kurikulum_id: targetKurikulumId,
-        mata_kuliah_id: r.mata_kuliah_id,
+        mata_kuliah_id: r.id,
       }))
     );
   }
 
   // 4. Copy kurikulum_sesi
   const sesiRelations = await db
-    .select({ sesi_id: kurikulumSesi.sesi_id })
-    .from(kurikulumSesi)
-    .where(eq(kurikulumSesi.kurikulum_id, sourceKurikulumId));
+    .insert(sesi)
+    .select(
+      db
+        .select({
+          jam_mulai: sesi.jam_mulai,
+          jam_akhir: sesi.jam_akhir,
+        })
+        .from(kurikulumSesi)
+        .innerJoin(sesi, eq(kurikulumSesi.sesi_id, sesi.id))
+        .where(eq(kurikulumSesi.kurikulum_id, sourceKurikulumId))
+    )
+    .returning();
 
   if (sesiRelations.length > 0) {
     await db.insert(kurikulumSesi).values(
       sesiRelations.map((r) => ({
         kurikulum_id: targetKurikulumId,
-        sesi_id: r.sesi_id,
+        sesi_id: r.id,
       }))
     );
   }
 
-  // 5. Copy kelas & kurikulum_kelas
-  // Membuat kelas baru dengan isi yang sama, kemudian mengubah semua kurikulum_kelas dengan kelas_id yang baru
-  const sourceKelasList = await db
-    .select({
-      prodi: kelas.prodi,
-      semester: kelas.semester,
-      kelas: kelas.kelas,
-      kode_kelas: kelas.kode_kelas,
-    })
-    .from(kelas)
-    .innerJoin(kurikulumKelas, eq(kelas.id, kurikulumKelas.kelas_id))
-    .where(eq(kurikulumKelas.kurikulum_id, sourceKurikulumId));
+  // 5. Copy kurikulum_kelas
+  const kelasRelations = await db
+    .insert(kelas)
+    .select(
+      db
+        .select({
+          prodi: kelas.prodi,
+          semester: kelas.semester,
+          kelas: kelas.kelas,
+          kode_kelas: kelas.kode_kelas,
+        })
+        .from(kurikulumKelas)
+        .innerJoin(kelas, eq(kurikulumKelas.kelas_id, kelas.id))
+        .where(eq(kurikulumKelas.kurikulum_id, sourceKurikulumId))
+    )
+    .returning();
 
-  for (const item of sourceKelasList) {
-    const [newKelas] = await db
-      .insert(kelas)
-      .values({
-        prodi: item.prodi,
-        semester: item.semester,
-        kelas: item.kelas,
-        kode_kelas: item.kode_kelas,
-      })
-      .returning();
-
-    await db.insert(kurikulumKelas).values({
-      kurikulum_id: targetKurikulumId,
-      kelas_id: newKelas.id,
-    });
+  if (kelasRelations.length > 0) {
+    await db.insert(kurikulumKelas).values(
+      kelasRelations.map((r) => ({
+        kurikulum_id: targetKurikulumId,
+        kelas_id: r.id,
+      }))
+    );
   }
 }

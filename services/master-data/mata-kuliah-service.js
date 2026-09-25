@@ -97,34 +97,8 @@ export async function createMataKuliahService(payload, kurikulumId) {
     error.statusCode = 404;
     throw error;
   }
-
-  // Validasi semester kurikulum jika ada
-  if (kurikulumData.semester && payload.semester !== undefined) {
-    const kurikulumSemester = kurikulumData.semester.trim().toLowerCase();
-    const isKurikulumGanjil = kurikulumSemester.includes("ganjil");
-    const isKurikulumGenap = kurikulumSemester.includes("genap");
-    const inputSemester = Number(payload.semester);
-
-    if (!isNaN(inputSemester) && inputSemester > 0) {
-      const isInputGanjil = inputSemester % 2 !== 0;
-      const isInputGenap = inputSemester % 2 === 0;
-
-      if (isKurikulumGanjil && isInputGenap) {
-        const error = new Error("Kurikulum semester ganjil tidak boleh memiliki mata kuliah dengan semester genap");
-        error.statusCode = 400;
-        throw error;
-      }
-
-      if (isKurikulumGenap && isInputGanjil) {
-        const error = new Error("Kurikulum semester genap tidak boleh memiliki mata kuliah dengan semester ganjil");
-        error.statusCode = 400;
-        throw error;
-      }
-    }
-  }
-
   const data = {
-    kode: Number(payload.kode),
+    kode: payload.kode,
     nama: payload.nama.trim(),
     sks: Number(payload.sks),
     prodi: payload.prodi.trim(),
@@ -143,7 +117,7 @@ export async function updateMataKuliahService(id, payload) {
   await getMataKuliahByIdService(id);
 
   const data = {};
-  if (payload.kode !== undefined) data.kode = Number(payload.kode);
+  if (payload.kode !== undefined) data.kode = payload.kode.trim();
   if (payload.nama !== undefined) data.nama = payload.nama.trim();
   if (payload.sks !== undefined) data.sks = Number(payload.sks);
   if (payload.prodi !== undefined) data.prodi = payload.prodi.trim();

@@ -68,7 +68,7 @@ export async function updateKelas(req, res, next) {
 export async function deleteKelas(req, res, next) {
   try {
     const kurikulumId = Number(req.params.kurikulumId);
-    const semesterVal = req.body?.semester !== undefined ? req.body.semester : req.query?.semester;
+    const semesterVal = req.body.semester
     if (semesterVal === undefined || semesterVal === null || semesterVal === "") {
       const err = new Error("Parameter semester wajib diisi");
       err.statusCode = 400;

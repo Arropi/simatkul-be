@@ -12,7 +12,6 @@ masterDataRouter.use("/dosen", dosenRouter);
 masterDataRouter.use("/kelas", kelasRouter);
 masterDataRouter.use("/kurikulum", kurikulumRouter);
 masterDataRouter.use("/mata-kuliah", mataKuliahRouter);
-masterDataRouter.use("/matakuliah", mataKuliahRouter);
 masterDataRouter.use("/ruang", ruangRouter);
 masterDataRouter.use("/sesi", sesiRouter);
 

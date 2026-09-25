@@ -143,6 +143,13 @@ export async function createKelasService(payload, kurikulumId) {
     throw error;
   }
 
+  const isSemesterExist = await kelasRepo.getKelasByKurikulumAndSemester(parsedKurikulumId, inputSemester);
+  if (isSemesterExist) {
+    const error = new Error(`Kurikulum dengan ID ${parsedKurikulumId} sudah memiliki kelas dengan semester ${inputSemester}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
   const items = generateKelasItems(
     payload.prodi,
     inputSemester,
@@ -176,9 +183,17 @@ export async function updateKelasService(kurikulumId, payload) {
     throw error;
   }
 
-  const inputSemester = Number(payload.semester);
-  if (isNaN(inputSemester) || inputSemester <= 0) {
-    const error = new Error("Semester harus berupa angka positif minimal 1");
+  const fromSemester = Number(payload.from_semester);
+  const toSemester = Number(payload.to_semester);
+
+  if (isNaN(fromSemester) || fromSemester <= 0) {
+    const error = new Error("from_semester harus berupa angka positif minimal 1");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (isNaN(toSemester) || toSemester <= 0) {
+    const error = new Error("to_semester harus berupa angka positif minimal 1");
     error.statusCode = 400;
     throw error;
   }
@@ -186,24 +201,40 @@ export async function updateKelasService(kurikulumId, payload) {
   const kurikulumSemester = kurikulumData.semester.trim().toLowerCase();
   const isKurikulumGanjil = kurikulumSemester.includes("ganjil");
   const isKurikulumGenap = kurikulumSemester.includes("genap");
-  const isInputGanjil = inputSemester % 2 !== 0;
-  const isInputGenap = inputSemester % 2 === 0;
 
-  if (isKurikulumGanjil && isInputGenap) {
+  const isFromGanjil = fromSemester % 2 !== 0;
+  const isFromGenap = fromSemester % 2 === 0;
+
+  if (isKurikulumGanjil && isFromGenap) {
     const error = new Error("Kurikulum semester ganjil tidak boleh memiliki kelas dengan semester genap");
     error.statusCode = 400;
     throw error;
   }
 
-  if (isKurikulumGenap && isInputGanjil) {
+  if (isKurikulumGenap && isFromGanjil) {
     const error = new Error("Kurikulum semester genap tidak boleh memiliki kelas dengan semester ganjil");
     error.statusCode = 400;
     throw error;
   }
 
-  const existing = await kelasRepo.getKelasByKurikulumAndSemester(parsedKurikulumId, inputSemester);
+  const isToGanjil = toSemester % 2 !== 0;
+  const isToGenap = toSemester % 2 === 0;
+
+  if (isKurikulumGanjil && isToGenap) {
+    const error = new Error("Kurikulum semester ganjil tidak boleh memiliki kelas dengan semester genap");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (isKurikulumGenap && isToGanjil) {
+    const error = new Error("Kurikulum semester genap tidak boleh memiliki kelas dengan semester ganjil");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing = await kelasRepo.getKelasByKurikulumAndSemester(parsedKurikulumId, fromSemester);
   if (!existing || existing.length === 0) {
-    const error = new Error(`Data kelas untuk kurikulum ID ${parsedKurikulumId} dan semester ${inputSemester} tidak ditemukan`);
+    const error = new Error(`Data kelas untuk kurikulum ID ${parsedKurikulumId} dan semester ${fromSemester} tidak ditemukan`);
     error.statusCode = 404;
     throw error;
   }
@@ -212,15 +243,20 @@ export async function updateKelasService(kurikulumId, payload) {
 
   const items = generateKelasItems(
     prodi,
-    inputSemester,
+    toSemester,
     payload.kelas_teori,
     payload.kelas_praktikum
   );
 
-  // Hapus semua kelas yang sudah terbuat pada semester dan kurikulumId tersebut
-  await kelasRepo.deleteKelasByKurikulumAndSemester(parsedKurikulumId, inputSemester);
+  // Hapus semua kelas lama yang terbuat pada fromSemester
+  await kelasRepo.deleteKelasByKurikulumAndSemester(parsedKurikulumId, fromSemester);
 
-  // Buat kelas baru sesuai konfigurasi
+  // Jika toSemester berbeda dengan fromSemester, pastikan toSemester juga bersih
+  if (toSemester !== fromSemester) {
+    await kelasRepo.deleteKelasByKurikulumAndSemester(parsedKurikulumId, toSemester);
+  }
+
+  // Buat kelas baru sesuai konfigurasi pada toSemester
   const createdClasses = await kelasRepo.createKelasBatch(items);
   const links = createdClasses.map((c) => ({
     kurikulum_id: parsedKurikulumId,

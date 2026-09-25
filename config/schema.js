@@ -47,7 +47,7 @@ export const kurikulum = pgTable("kurikulum", {
 // Tabel Mata Kuliah
 export const mataKuliah = pgTable("mata_kuliah", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-  kode: bigint("kode", { mode: "number" }).notNull(),
+  kode: varchar("kode", { length: 255 }).notNull(),
   nama: varchar("nama", { length: 255 }).notNull(),
   sks: smallint("sks").notNull(),
   prodi: varchar("prodi", { length: 255 }).notNull(),
@@ -66,7 +66,6 @@ export const ruang = pgTable("ruang", {
 // Tabel Sesi
 export const sesi = pgTable("sesi", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-  nama: bigint("nama", { mode: "number" }).notNull(),
   jam_mulai: timestamp("jam_mulai", { mode: "string" }).notNull(),
   jam_akhir: timestamp("jam_akhir", { mode: "string" }).notNull(),
 });
@@ -124,6 +123,30 @@ export const kurikulumRuang = pgTable("kurikulum_ruang", {
   ruang_id: bigint("ruang_id", { mode: "number" })
     .notNull()
     .references(() => ruang.id, { onDelete: "cascade" }),
+});
+
+// Tabel Penjadwalan
+export const penjadwalan = pgTable("penjadwalan", {
+  id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+  kurikulum_id: bigint("kurikulum_id", { mode: "number" })
+    .notNull()
+    .references(() => kurikulum.id, { onDelete: "cascade" }),
+  matkul_id: bigint("matkul_id", { mode: "number" })
+    .notNull()
+    .references(() => mataKuliah.id, { onDelete: "cascade" }),
+  dosen_id: bigint("dosen_id", { mode: "number" })
+    .notNull()
+    .references(() => dosen.id, { onDelete: "cascade" }),
+  ruang_id: bigint("ruang_id", { mode: "number" })
+    .notNull()
+    .references(() => ruang.id, { onDelete: "cascade" }),
+  sesi_id: bigint("sesi_id", { mode: "number" })
+    .notNull()
+    .references(() => sesi.id, { onDelete: "cascade" }),
+  kelas_id: bigint("kelas_id", { mode: "number" })
+    .notNull()
+    .references(() => kelas.id, { onDelete: "cascade" }),
+  hari: varchar("hari", { length: 255 }).notNull(),
 });
 
 

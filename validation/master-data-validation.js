@@ -105,7 +105,8 @@ export const updateKelasSchema = z.object({
   prodi: z.enum(["TRI", "TRPL", "TRIK", "TRE"], {
     error: () => "Prodi harus salah satu dari: TRI, TRPL, TRIK, TRE",
   }).optional(),
-  semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
+  from_semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
+  to_semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
   kelas_teori: z.coerce.number().int().min(1, "kelas_teori harus berupa angka minimal 0"),
   kelas_praktikum: z.coerce.number().int().min(1, "kelas_praktikum harus berupa angka minimal 0"),
   kode_kelas: z.string().optional(),
@@ -131,10 +132,7 @@ export const kurikulumSchema = z.object({
     error: () => "Semester harus 'Ganjil' atau 'Genap'",
   }),
   tahun_ajaran: z.coerce.number().int().min(1900, "Tahun ajaran minimal 1900").max(2100, "Tahun ajaran maksimal 2100").optional(),
-  tahun: z.coerce.number().int().min(1900, "Tahun ajaran minimal 1900").max(2100, "Tahun ajaran maksimal 2100").optional(),
   description: z.string().optional().nullable(),
-  kurikulumId: z.coerce.number().int().positive().optional(),
-  kurikulum_id: z.coerce.number().int().positive().optional(),
   copy: z.union([z.boolean(), z.string()]).optional(),
 }).refine(
   (data) => data.tahun_ajaran !== undefined || data.tahun !== undefined,
@@ -160,7 +158,7 @@ export function kurikulumValidation(req, res, next) {
 
 // === MATA KULIAH ===
 export const mataKuliahSchema = z.object({
-  kode: z.coerce.number().int().min(1, "Field kode harus berupa angka integer positif"),
+  kode: z.string().min(1, "Field kode tidak boleh kosong"),
   nama: z.string().min(1, "Field nama tidak boleh kosong"),
   sks: z.coerce.number().int().min(1, "Field sks minimal 1").max(10, "Field sks maksimal 10"),
   prodi: z.enum(["TRPL", "TRI", "TRE", "TRIK"], {
@@ -333,13 +331,8 @@ export function ruangValidation(req, res, next) {
 
 // === SESI ===
 export const sesiSchema = z.object({
-  nama: z.coerce.number().int().min(1, "Field nama sesi harus berupa angka"),
-  jam_mulai: z.string().optional(),
-  jamMulai: z.string().optional(),
-  jam_akhir: z.string().optional(),
-  jamAkhir: z.string().optional(),
-  kurikulum_id: z.coerce.number().int().positive().optional(),
-  kurikulumId: z.coerce.number().int().positive().optional(),
+  jam_mulai: z.string(),
+  jam_akhir: z.string(),
 }).refine(
   (data) => {
     const start = data.jam_mulai || data.jamMulai;

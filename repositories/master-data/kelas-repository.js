@@ -47,26 +47,11 @@ export async function getKelasByKurikulumAndSemester(kurikulumId, semester) {
     );
 }
 
-export async function createKelas(data) {
-  const result = await db.insert(kelas).values(data).returning();
-  return result[0];
-}
-
 export async function createKelasBatch(kelasList) {
   if (!kelasList || kelasList.length === 0) return [];
   return await db.insert(kelas).values(kelasList).returning();
 }
 
-export async function linkKurikulumKelas(kurikulumId, kelasId) {
-  const result = await db
-    .insert(kurikulumKelas)
-    .values({
-      kurikulum_id: kurikulumId,
-      kelas_id: kelasId,
-    })
-    .returning();
-  return result[0];
-}
 
 export async function linkKurikulumKelasBatch(links) {
   if (!links || links.length === 0) return [];
@@ -89,13 +74,5 @@ export async function deleteKelasByKurikulumAndSemester(kurikulumId, semester) {
     .where(inArray(kelas.id, idsToDelete))
     .returning();
   return deleted;
-}
-
-export async function deleteKelas(kurikulumId, semester) {
-  if (semester !== undefined) {
-    return await deleteKelasByKurikulumAndSemester(kurikulumId, semester);
-  }
-  const result = await db.delete(kelas).where(eq(kelas.id, kurikulumId)).returning();
-  return result[0] || null;
 }
 
