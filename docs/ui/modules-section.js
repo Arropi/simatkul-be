@@ -43,7 +43,31 @@ export function renderModulesSection() {
         </div>
       </div>
 
-      <!-- Card 3: All-in-One -->
+      <!-- Card 3: Penjadwalan -->
+      <div class="module-card">
+        <div>
+          <div class="card-header">
+            <span class="card-category">PENJADWALAN</span>
+            <span class="tag">7 Endpoint</span>
+          </div>
+          <h3 class="module-title">Modul Penjadwalan</h3>
+          <p class="module-desc">Manajemen jadwal perkuliahan: Form options, okupansi ruang, jadwal kelas & dosen (beban SKS), pembuatan & pembaruan multi-sesi/multi-dosen, serta deteksi bentrok.</p>
+          <div class="endpoint-tags">
+            <span class="tag">/form-options</span>
+            <span class="tag">/ruang</span>
+            <span class="tag">/kelas</span>
+            <span class="tag">/dosen</span>
+            <span class="tag">POST /</span>
+            <span class="tag">PUT /:id</span>
+            <span class="tag">DELETE /:id</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <a href="/api-docs/penjadwalan" class="btn btn-primary">Buka Dokumentasi Penjadwalan &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Card 4: All-in-One -->
       <div class="module-card">
         <div>
           <div class="card-header">
@@ -55,6 +79,7 @@ export function renderModulesSection() {
           <div class="endpoint-tags">
             <span class="tag">Auth</span>
             <span class="tag">Master Data</span>
+            <span class="tag">Penjadwalan</span>
             <span class="tag">Bearer Token</span>
           </div>
         </div>

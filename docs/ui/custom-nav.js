@@ -15,6 +15,7 @@ window.addEventListener('DOMContentLoaded', function() {
       <a href="/api-docs" style="color:#94a3b8; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #1e293b; background:#111722; font-weight:500; font-size:12px;">Portal & Error Docs</a>
       <a href="/api-docs/auth" style="color:#94a3b8; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #1e293b; background:#111722; font-weight:500; font-size:12px;">Auth Module</a>
       <a href="/api-docs/master-data" style="color:#94a3b8; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #1e293b; background:#111722; font-weight:500; font-size:12px;">Master Data Module</a>
+      <a href="/api-docs/penjadwalan" style="color:#94a3b8; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #1e293b; background:#111722; font-weight:500; font-size:12px;">Penjadwalan Module</a>
       <a href="/api-docs/all" style="color:#f8fafc; text-decoration:none; padding:5px 12px; border-radius:4px; border:1px solid #334155; background:#1e293b; font-weight:600; font-size:12px;">Semua Modul</a>
     </div>
   \`;

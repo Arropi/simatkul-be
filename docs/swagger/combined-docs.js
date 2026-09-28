@@ -1,5 +1,6 @@
 import { authSwaggerDoc } from "./auth-docs.js";
 import { masterDataSwaggerDoc } from "./master-data-docs.js";
+import { penjadwalanSwaggerDoc } from "./penjadwalan-docs.js";
 import { globalErrorSchemas, globalErrorResponses } from "./error-schema.js";
 
 export const combinedSwaggerDoc = {
@@ -9,7 +10,7 @@ export const combinedSwaggerDoc = {
     version: "1.0.0",
     description: `### SIMATKUL Backend RESTful API Documentation
 
-Dokumentasi lengkap seluruh endpoint SIMATKUL API (Sistem Informasi Pengaturan Mata Kuliah) yang mencakup **Modul Auth** dan **Modul Master Data**.
+Dokumentasi lengkap seluruh endpoint SIMATKUL API (Sistem Informasi Pengaturan Mata Kuliah) yang mencakup **Modul Auth**, **Modul Master Data**, dan **Modul Penjadwalan**.
 
 ---
 
@@ -45,19 +46,23 @@ Silakan periksa definisi skema **\`GlobalErrorResponse\`** di bagian bawah (**Sc
   tags: [
     ...authSwaggerDoc.tags,
     ...masterDataSwaggerDoc.tags,
+    ...penjadwalanSwaggerDoc.tags,
   ],
   paths: {
     ...authSwaggerDoc.paths,
     ...masterDataSwaggerDoc.paths,
+    ...penjadwalanSwaggerDoc.paths,
   },
   components: {
     securitySchemes: {
       ...authSwaggerDoc.components.securitySchemes,
       ...masterDataSwaggerDoc.components.securitySchemes,
+      ...penjadwalanSwaggerDoc.components.securitySchemes,
     },
     schemas: {
       ...authSwaggerDoc.components.schemas,
       ...masterDataSwaggerDoc.components.schemas,
+      ...penjadwalanSwaggerDoc.components.schemas,
       ...globalErrorSchemas,
       ErrorResponse: {
         type: "object",

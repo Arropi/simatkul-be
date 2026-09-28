@@ -1,4 +1,4 @@
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, sql } from "drizzle-orm";
 import { db } from "../../config/database.js";
 import {
   kurikulum,
@@ -213,3 +213,111 @@ export async function getBaseSesiById(id) {
   const result = await db.select().from(sesi).where(eq(sesi.id, id)).limit(1);
   return result[0] || null;
 }
+
+export async function getFormOptionsRaw(kurikulumId) {
+  const result = await db.execute(sql`
+    SELECT
+      EXISTS(SELECT 1 FROM kurikulum WHERE id = ${kurikulumId}) AS kurikulum_exists,
+      COALESCE(
+        (
+          SELECT json_agg(json_build_object('id', r.id::int, 'nama', r.nama) ORDER BY r.nama ASC, r.id ASC)
+          FROM kurikulum_ruang kr
+          INNER JOIN ruang r ON kr.ruang_id = r.id
+          WHERE kr.kurikulum_id = ${kurikulumId}
+        ),
+        '[]'::json
+      ) AS ruang,
+      COALESCE(
+        (
+          SELECT json_agg(json_build_object('id', d.id::int, 'nama', d.nama) ORDER BY d.nama ASC, d.id ASC)
+          FROM kurikulum_dosen kd
+          INNER JOIN dosen d ON kd.dosen_id = d.id
+          WHERE kd.kurikulum_id = ${kurikulumId}
+        ),
+        '[]'::json
+      ) AS dosen,
+      COALESCE(
+        (
+          SELECT json_agg(json_build_object('id', s.id::int, 'jam_mulai', s.jam_mulai::text, 'jam_akhir', s.jam_akhir::text) ORDER BY s.jam_mulai ASC, s.id ASC)
+          FROM kurikulum_sesi ks
+          INNER JOIN sesi s ON ks.sesi_id = s.id
+          WHERE ks.kurikulum_id = ${kurikulumId}
+        ),
+        '[]'::json
+      ) AS sesi,
+      COALESCE(
+        (
+          SELECT json_agg(json_build_object('id', k.id::int, 'kode_kelas', k.kode_kelas, 'prodi', k.prodi, 'semester', k.semester::int, 'kelas', k.kelas) ORDER BY k.prodi ASC, k.kode_kelas ASC, k.id ASC)
+          FROM kurikulum_kelas kk
+          INNER JOIN kelas k ON kk.kelas_id = k.id
+          WHERE kk.kurikulum_id = ${kurikulumId}
+        ),
+        '[]'::json
+      ) AS kelas,
+      COALESCE(
+        (
+          SELECT json_agg(json_build_object('id', mk.id::int, 'nama', mk.nama, 'prodi', mk.prodi) ORDER BY mk.prodi ASC, mk.nama ASC, mk.id ASC)
+          FROM kurikulum_mata_kuliah kmk
+          INNER JOIN mata_kuliah mk ON kmk.mata_kuliah_id = mk.id
+          WHERE kmk.kurikulum_id = ${kurikulumId}
+        ),
+        '[]'::json
+      ) AS mata_kuliah;
+  `);
+
+  const rows = result.rows || result || [];
+  return rows[0] || null;
+}
+
+export async function validatePenjadwalanMasterDataRaw({ kurikulumId, kelasId, matkulId, ruangId, dosenIds, sesiIds }) {
+  const dList = (dosenIds || []).map(Number);
+  const sList = (sesiIds || []).map(Number);
+
+  const dArray = dList.length > 0
+    ? sql`ARRAY[${sql.join(dList.map((id) => sql`${id}::bigint`), sql`, `)}]`
+    : sql`ARRAY[]::bigint[]`;
+
+  const sArray = sList.length > 0
+    ? sql`ARRAY[${sql.join(sList.map((id) => sql`${id}::bigint`), sql`, `)}]`
+    : sql`ARRAY[]::bigint[]`;
+
+  const result = await db.execute(sql`
+    SELECT
+      EXISTS(SELECT 1 FROM kurikulum WHERE id = ${kurikulumId}) AS kurikulum_exists,
+
+      (SELECT json_build_object(
+        'exists', true,
+        'in_kurikulum', EXISTS(SELECT 1 FROM kurikulum_kelas WHERE kurikulum_id = ${kurikulumId} AND kelas_id = ${kelasId}),
+        'data', json_build_object('id', k.id::int, 'kode_kelas', k.kode_kelas, 'prodi', k.prodi, 'semester', k.semester::int, 'kelas', k.kelas)
+      ) FROM kelas k WHERE k.id = ${kelasId}) AS kelas_info,
+
+      (SELECT json_build_object(
+        'exists', true,
+        'in_kurikulum', EXISTS(SELECT 1 FROM kurikulum_mata_kuliah WHERE kurikulum_id = ${kurikulumId} AND mata_kuliah_id = ${matkulId}),
+        'data', json_build_object('id', mk.id::int, 'nama', mk.nama, 'kode', mk.kode, 'sks', mk.sks::int)
+      ) FROM mata_kuliah mk WHERE mk.id = ${matkulId}) AS matkul_info,
+
+      (SELECT json_build_object(
+        'exists', true,
+        'in_kurikulum', EXISTS(SELECT 1 FROM kurikulum_ruang WHERE kurikulum_id = ${kurikulumId} AND ruang_id = ${ruangId}),
+        'data', json_build_object('id', r.id::int, 'nama', r.nama)
+      ) FROM ruang r WHERE r.id = ${ruangId}) AS ruang_info,
+
+      (SELECT json_agg(json_build_object(
+        'id', d.id::int,
+        'nama', d.nama,
+        'in_kurikulum', EXISTS(SELECT 1 FROM kurikulum_dosen kd WHERE kd.kurikulum_id = ${kurikulumId} AND kd.dosen_id = d.id)
+      )) FROM dosen d WHERE d.id = ANY(${dArray})) AS dosens_info,
+
+      (SELECT json_agg(json_build_object(
+        'id', s.id::int,
+        'jam_mulai', s.jam_mulai::text,
+        'jam_akhir', s.jam_akhir::text,
+        'in_kurikulum', EXISTS(SELECT 1 FROM kurikulum_sesi ks WHERE ks.kurikulum_id = ${kurikulumId} AND ks.sesi_id = s.id)
+      )) FROM sesi s WHERE s.id = ANY(${sArray})) AS sesis_info;
+  `);
+
+  const rows = result.rows || result || [];
+  return rows[0] || null;
+}
+

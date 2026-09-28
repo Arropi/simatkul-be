@@ -11,6 +11,7 @@ export function renderHeader() {
       <div class="quick-nav">
         <a href="/api-docs/auth" class="btn btn-outline">Modul Auth</a>
         <a href="/api-docs/master-data" class="btn btn-outline">Modul Master Data</a>
+        <a href="/api-docs/penjadwalan" class="btn btn-outline">Modul Penjadwalan</a>
         <a href="/api-docs/all" class="btn btn-primary">Semua Endpoint</a>
       </div>
     </header>

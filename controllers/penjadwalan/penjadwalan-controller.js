@@ -25,3 +25,68 @@ export async function createPenjadwalan(req, res, next) {
     next(error);
   }
 }
+
+export async function getPenjadwalanRuang(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await penjadwalanService.getPenjadwalanRuangService(kurikulumId);
+    res.status(200).json({
+      message: "Data penjadwalan ruang berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getPenjadwalanKelas(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await penjadwalanService.getPenjadwalanKelasService(kurikulumId);
+    res.status(200).json({
+      message: "Data penjadwalan kelas berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getPenjadwalanDosen(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await penjadwalanService.getPenjadwalanDosenService(kurikulumId);
+    res.status(200).json({
+      message: "Data penjadwalan dosen berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updatePenjadwalan(req, res, next) {
+  try {
+    const id = Number(req.params.penjadwalan_id || req.params.id);
+    const data = await penjadwalanService.updatePenjadwalanService(id, req.body);
+    res.status(200).json({
+      message: "Data penjadwalan berhasil diupdate",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deletePenjadwalan(req, res, next) {
+  try {
+    const id = Number(req.params.penjadwalan_id || req.params.id);
+    const data = await penjadwalanService.deletePenjadwalanService(id);
+    res.status(200).json({
+      message: "Data penjadwalan berhasil dihapus",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}

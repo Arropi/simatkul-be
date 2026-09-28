@@ -174,6 +174,50 @@ Hello World
 | `pnpm dev` | Menjalankan development server dengan auto-reload (Nodemon) |
 | `pnpm start` | Menjalankan server dalam mode produksi (`node server.js`) |
 | `pnpm test` | Menjalankan unit/integration testing |
+| `pnpm db:index` | Membuat & memverifikasi indeks database PostgreSQL dan constraint identity |
+
+---
+
+## 📖 Dokumentasi API & Swagger UI
+
+SIMATKUL Backend dilengkapi dengan dokumentasi interaktif **OpenAPI 3.0 (Swagger UI)** dan Portal Terpadu. Setelah server dijalankan, Anda dapat mengakses dokumentasi melalui browser:
+
+| Antarmuka | URL | Deskripsi |
+| :--- | :--- | :--- |
+| **API Portal** | `http://localhost:3000/api-docs` | Beranda portal dokumentasi, panduan otentikasi, dan katalog kode error standar |
+| **Modul Auth** | `http://localhost:3000/api-docs/auth` | Swagger UI interaktif untuk endpoint Autentikasi dan login |
+| **Modul Master Data** | `http://localhost:3000/api-docs/master-data` | Swagger UI interaktif untuk Kurikulum, Matkul, Dosen, Kelas, Ruang, dan Sesi |
+| **Modul Penjadwalan** | `http://localhost:3000/api-docs/penjadwalan` | Swagger UI interaktif untuk Form Options, Ruang (Okupansi), Kelas, Dosen (Beban SKS), dan CRUD Penjadwalan |
+| **Semua Endpoint** | `http://localhost:3000/api-docs/all` | Katalog lengkap seluruh endpoint API dalam satu tampilan terpadu |
+
+---
+
+## 🔌 Ringkasan Modul Penjadwalan (`/api/penjadwalan`)
+
+Modul Penjadwalan mengelola plotting jadwal perkuliahan berbasis relasi modern (mendukung *multi-sesi* dan *multi-dosen* per jadwal) lengkap dengan deteksi bentrok pintar:
+
+| Method | Endpoint | Deskripsi | Auth |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/penjadwalan/form-options/:kurikulumId` | Mendapatkan opsi dropdown form (Ruang, Dosen, Sesi terurut, Kelas, Matkul) | ❌ |
+| `GET` | `/api/penjadwalan/ruang/:kurikulumId` | Rekap jadwal per ruang (dengan `nama_matkul`, `kode_kelas`, `nama_dosen`), sesi terurut, dan okupansi | ❌ |
+| `GET` | `/api/penjadwalan/kelas/:kurikulumId` | Rekap jadwal per kelas (dengan `nama_matkul`, `nama_ruang`, `nama_dosen`) berdasarkan `kode_kelas` | ❌ |
+| `GET` | `/api/penjadwalan/dosen/:kurikulumId` | Rekap jadwal mengajar dosen (dengan `nama_matkul`, `kode_kelas`, `nama_ruang`) beserta akumulasi total `beban_sks` | ❌ |
+| `GET` | `/api/penjadwalan/export-excel/dosen/:kurikulumId` | Export jadwal mengajar dosen ke spreadsheet Excel (`.xlsx`) | ❌ |
+| `GET` | `/api/penjadwalan/export-excel/kelas/:kurikulumId` | Export jadwal perkuliahan kelas ke spreadsheet Excel (`.xlsx`) | ❌ |
+| `GET` | `/api/penjadwalan/export-excel/ruang/:kurikulumId` | Export jadwal penggunaan ruang ke spreadsheet Excel (`.xlsx`) | ❌ |
+| `POST` | `/api/penjadwalan` | Membuat jadwal baru (multi-sesi & multi-dosen) dengan validasi bentrok ketat | ✅ |
+| `PUT` | `/api/penjadwalan/:penjadwalan_id` | Memperbarui jadwal perkuliahan dengan pengecualian ID jadwal terkait | ✅ |
+| `DELETE` | `/api/penjadwalan/:penjadwalan_id` | Menghapus jadwal beserta relasi sesi dan dosen terkait (cascade) | ✅ |
+
+### Fitur & Aturan Bisnis Penjadwalan:
+1. **Multi-Sesi & Multi-Dosen:** Satu jadwal dapat memiliki beberapa sesi (`sesi_ids: [1, 2]`) dan tim dosen pengajar (`dosen_ids: [3, 4]`).
+2. **Formula Okupansi Ruang:**
+   $$\text{Okupansi (\%)} = \left(\frac{\text{Banyaknya slot sesi ruang digunakan}}{\text{Total sesi kurikulum} \times 5}\right) \times 100\%$$
+3. **Akumulasi Beban SKS Dosen:** Menghitung total SKS dari setiap kombinasi unik mata kuliah dan kelas yang diampu dosen dalam kurikulum terkait.
+4. **Deteksi Bentrok Kompleks:**
+   - Bentrok slot ruang pada hari dan sesi yang sama.
+   - Bentrok jadwal dosen pada hari dan sesi yang sama.
+   - Bentrok kelas paralel/gabungan (contoh: kelas gabungan `PL4AA` tidak boleh bentrok dengan kelas pecahan `PL4A1` atau `PL4A2` pada slot yang sama).
 
 ---
 

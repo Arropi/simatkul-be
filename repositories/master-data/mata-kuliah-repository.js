@@ -122,9 +122,9 @@ export async function getMataKuliahByKurikulum(kurikulumId, options = {}) {
         page: pageNum,
         limit: limitNum,
         total,
-        totalPages,
-        hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1,
+        total_pages: totalPages,
+        has_next_page: pageNum < totalPages,
+        has_prev_page: pageNum > 1,
       },
     };
   }
@@ -136,9 +136,9 @@ export async function getMataKuliahByKurikulum(kurikulumId, options = {}) {
       page: 1,
       limit: total,
       total,
-      totalPages: total > 0 ? 1 : 0,
-      hasNextPage: false,
-      hasPrevPage: false,
+      total_pages: total > 0 ? 1 : 0,
+      has_next_page: false,
+      has_prev_page: false,
     },
   };
 }

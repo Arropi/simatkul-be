@@ -3,15 +3,37 @@ import * as penjadwalanController from "../../controllers/penjadwalan/penjadwala
 import {
   kurikulumParamValidation,
   penjadwalanValidation,
+  penjadwalanIdParamValidation,
 } from "../../validation/penjadwalan-validation.js";
 import { authMiddleware } from "../../middleware/auth-middleware.js";
+import excelPenjadwalanRouter from "./excel-penjadwalan-route.js";
 
 const penjadwalanRouter = Router();
+
+penjadwalanRouter.use(excelPenjadwalanRouter);
 
 penjadwalanRouter.get(
   "/form-options/:kurikulumId",
   kurikulumParamValidation,
   penjadwalanController.getFormOptions
+);
+
+penjadwalanRouter.get(
+  "/ruang/:kurikulumId",
+  kurikulumParamValidation,
+  penjadwalanController.getPenjadwalanRuang
+);
+
+penjadwalanRouter.get(
+  "/kelas/:kurikulumId",
+  kurikulumParamValidation,
+  penjadwalanController.getPenjadwalanKelas
+);
+
+penjadwalanRouter.get(
+  "/dosen/:kurikulumId",
+  kurikulumParamValidation,
+  penjadwalanController.getPenjadwalanDosen
 );
 
 penjadwalanRouter.post(
@@ -21,12 +43,19 @@ penjadwalanRouter.post(
   penjadwalanController.createPenjadwalan
 );
 
-penjadwalanRouter.post(
-  "/:kurikulumId",
+penjadwalanRouter.put(
+  "/:penjadwalan_id",
   authMiddleware,
-  kurikulumParamValidation,
+  penjadwalanIdParamValidation,
   penjadwalanValidation,
-  penjadwalanController.createPenjadwalan
+  penjadwalanController.updatePenjadwalan
+);
+
+penjadwalanRouter.delete(
+  "/:penjadwalan_id",
+  authMiddleware,
+  penjadwalanIdParamValidation,
+  penjadwalanController.deletePenjadwalan
 );
 
 export default penjadwalanRouter;

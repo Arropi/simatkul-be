@@ -1879,19 +1879,15 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       },
       CreateDosenRequest: {
         type: "object",
-        required: ["nama", "nidn", "jabatan_akademik"],
+        required: ["nama"],
         properties: {
           nama: { type: "string", example: "Dr. Budi Santoso, M.Kom." },
-          nidn: { type: "string", example: "0012058401" },
-          jabatan_akademik: { type: "string", example: "Lektor" },
         },
       },
       UpdateDosenRequest: {
         type: "object",
         properties: {
           nama: { type: "string", example: "Dr. Budi Santoso, M.Kom." },
-          nidn: { type: "string", example: "0012058401" },
-          jabatan_akademik: { type: "string", example: "Lektor Kepala" },
         },
       },
 
@@ -1962,9 +1958,8 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       },
       CreateSesiRequest: {
         type: "object",
-        required: ["nama", "jam_mulai", "jam_akhir"],
+        required: ["jam_mulai", "jam_akhir"],
         properties: {
-          nama: { type: "integer", minimum: 1, example: 1 },
           jam_mulai: { type: "string", example: "07:30:00", description: "Format: HH:mm atau HH:mm:ss" },
           jam_akhir: { type: "string", example: "09:10:00", description: "Harus lebih lambat daripada jam_mulai" },
         },
@@ -1972,7 +1967,6 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       UpdateSesiRequest: {
         type: "object",
         properties: {
-          nama: { type: "integer", minimum: 1, example: 1 },
           jam_mulai: { type: "string", example: "07:30:00" },
           jam_akhir: { type: "string", example: "09:10:00" },
         },

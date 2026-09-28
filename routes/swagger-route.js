@@ -2,6 +2,7 @@ import { Router } from "express";
 import swaggerUi from "swagger-ui-express";
 import { authSwaggerDoc } from "../docs/swagger/auth-docs.js";
 import { masterDataSwaggerDoc } from "../docs/swagger/master-data-docs.js";
+import { penjadwalanSwaggerDoc } from "../docs/swagger/penjadwalan-docs.js";
 import { combinedSwaggerDoc } from "../docs/swagger/combined-docs.js";
 import { renderSwaggerPortalHtml } from "../docs/swagger/portal-html.js";
 import { customNavScript } from "../docs/ui/custom-nav.js";
@@ -54,6 +55,12 @@ swaggerRouter.use(
   "/master-data",
   swaggerUi.serve,
   swaggerUi.setup(masterDataSwaggerDoc, createSwaggerUiOptions("SIMATKUL API - Master Data Module"))
+);
+
+swaggerRouter.use(
+  "/penjadwalan",
+  swaggerUi.serve,
+  swaggerUi.setup(penjadwalanSwaggerDoc, createSwaggerUiOptions("SIMATKUL API - Penjadwalan Module"))
 );
 
 swaggerRouter.use(

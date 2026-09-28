@@ -7,7 +7,6 @@ export async function getAllSesi(kurikulumId) {
     return await db
       .select({
         id: sesi.id,
-        nama: sesi.nama,
         jam_mulai: sesi.jam_mulai,
         jam_akhir: sesi.jam_akhir,
       })

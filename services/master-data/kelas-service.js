@@ -144,7 +144,7 @@ export async function createKelasService(payload, kurikulumId) {
   }
 
   const isSemesterExist = await kelasRepo.getKelasByKurikulumAndSemester(parsedKurikulumId, inputSemester);
-  if (isSemesterExist) {
+  if (isSemesterExist && isSemesterExist.length > 0) {
     const error = new Error(`Kurikulum dengan ID ${parsedKurikulumId} sudah memiliki kelas dengan semester ${inputSemester}`);
     error.statusCode = 400;
     throw error;
