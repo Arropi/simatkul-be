@@ -219,6 +219,74 @@ Modul Penjadwalan mengelola plotting jadwal perkuliahan berbasis relasi modern (
    - Bentrok jadwal dosen pada hari dan sesi yang sama.
    - Bentrok kelas paralel/gabungan (contoh: kelas gabungan `PL4AA` tidak boleh bentrok dengan kelas pecahan `PL4A1` atau `PL4A2` pada slot yang sama).
 
+### 📊 Dokumentasi Endpoint Export Excel Penjadwalan
+
+Fitur export spreadsheet Excel (`.xlsx`) menyajikan rekap visual penjadwalan dalam bentuk matriks **Sesi x Hari (Senin - Jumat)** dengan kartu jadwal, warna latar tematik, dan merge vertikal untuk jadwal multi-sesi.
+
+#### 1. Daftar Endpoint Export
+
+| Method | Endpoint | Output Filename | Keterangan |
+| :---: | :--- | :--- | :--- |
+| `GET` | `/api/penjadwalan/export-excel/dosen/:kurikulumId` | `jadwal-dosen-kurikulum-<id>.xlsx` | Rekap jadwal mengajar per dosen + akumulasi total beban SKS |
+| `GET` | `/api/penjadwalan/export-excel/kelas/:kurikulumId` | `jadwal-kelas-kurikulum-<id>.xlsx` | Rekap jadwal perkuliahan per kelas |
+| `GET` | `/api/penjadwalan/export-excel/ruang/:kurikulumId` | `jadwal-ruang-kurikulum-<id>.xlsx` | Rekap jadwal penggunaan per ruangan + persentase okupansi |
+
+#### 2. Parameter & Header
+
+- **Path Parameter:**
+  - `kurikulumId` *(integer, required)*: ID Kurikulum yang valid (harus berupa integer positif).
+- **Header Response:**
+  - `Content-Type`: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+  - `Content-Disposition`: `attachment; filename="<nama-file>.xlsx"`
+
+#### 3. Spesifikasi Tata Letak & Pemformatan Spreadsheet
+
+- **Header Tabel:** Baris pertama memuat kolom `[Nama Dosen / Kelas / Ruang]`, `Sesi`, `Senin`, `Selasa`, `Rabu`, `Kamis`, dan `Jumat` (latar slate lembut `#F1F5F9`, teks tebal `#1E293B`, tinggi 34pt).
+- **Alokasi Baris per Sesi:** Setiap nomor sesi mengalokasikan **2 baris spreadsheet** (tinggi 24pt/baris = 48pt per sesi). Total baris per entitas = `totalSesiKurikulum × 2` baris.
+- **Kolom 1 (Entitas):** Di-merge vertikal sepanjang seluruh sesi entitas:
+  - **Dosen:** Baris atas memuat `Nama Dosen` (Bold `#1E3A8A`), baris bawah memuat `Beban Dosen: X SKS` (`#64748B`).
+  - **Ruang:** Baris atas memuat `Nama Ruang` (Bold `#1E3A8A`), baris bawah memuat `Okupansi: X%` (`#64748B`).
+  - **Kelas:** Memuat `Nama/Kode Kelas` (Bold `#1E3A8A`).
+- **Kolom 2 (Sesi):** Di-merge vertikal 2 baris per nomor urut sesi (1, 2, 3, dst.) dengan styling pil biru muda (`#E0F2FE`, teks `#0284C7`).
+- **Isi Kartu Jadwal (Kolom Hari):**
+  - **Export Dosen:** Baris atas `Nama Mata Kuliah` (Bold `#9A3412`), baris bawah `Kode Kelas - Nama Ruang` (`#C2410C`).
+  - **Export Ruang:** Baris atas `Nama Mata Kuliah` (Bold `#9A3412`), baris bawah `Kode Kelas - Nama Dosen` (`#C2410C`).
+  - **Export Kelas:** Baris atas `Nama Mata Kuliah` (Bold `#9A3412`), baris bawah `Nama Ruang - Nama Dosen` (`#C2410C`).
+  - Kartu berlatar peach lembut (`#FFEDD5`) dengan garis tepi oranye `#FDBA74`.
+- **Multi-Sesi:** Jadwal yang berlangsung di beberapa sesi berurutan (misal sesi 3 & 4) **di-merge secara vertikal** sepanjang sesi-sesi tersebut menjadi satu blok kartu tinggi.
+- **Slot Kosong:** Sesi yang tidak memiliki jadwal di-merge vertikal 2 baris dengan tanda `"-"` di tengah (latar `#F8FAFC`, teks `#94A3B8`).
+
+#### 4. Contoh Pemanggilan Client
+
+**cURL:**
+```bash
+curl -X GET "http://localhost:3000/api/penjadwalan/export-excel/dosen/8" \
+     -o "jadwal-dosen-kurikulum-8.xlsx"
+```
+
+**JavaScript (Fetch & Download Blob di Browser):**
+```javascript
+async function downloadJadwalExcel(type, kurikulumId) {
+  const response = await fetch(`/api/penjadwalan/export-excel/${type}/${kurikulumId}`);
+  if (!response.ok) throw new Error('Gagal mendownload jadwal');
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `jadwal-${type}-kurikulum-${kurikulumId}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+// Contoh penggunaan:
+// downloadJadwalExcel('dosen', 8);
+// downloadJadwalExcel('kelas', 8);
+// downloadJadwalExcel('ruang', 8);
+```
+
 ---
 
 ## 📄 Lisensi
