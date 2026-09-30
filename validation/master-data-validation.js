@@ -69,20 +69,26 @@ export const kelasSchema = z.object({
     error: () => "Prodi harus salah satu dari: TRI, TRPL, TRIK, TRE",
   }),
   semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
-  kelas_teori: z.coerce.number().int().min(1, "kelas_teori harus berupa angka minimal 0"),
-  kelas_praktikum: z.coerce.number().int().min(1, "kelas_praktikum harus berupa angka minimal 0"),
+  kelas_teori: z.coerce.number().int().min(0, "kelas_teori harus berupa angka minimal 0").optional(),
+  kelas_praktikum: z.coerce.number().int().min(0, "kelas_praktikum harus berupa angka minimal 0").optional(),
   kode_kelas: z.string().optional(),
+  nama_kelas: z.string().optional(),
+  kelas: z.string().optional(),
+  nama: z.string().optional(),
 }).refine(
   (data) => {
-    const hasTeori = data.kelas_teori !== undefined
-    const hasPraktikum = data.kelas_praktikum !== undefined
-    if (hasTeori && hasPraktikum && data.semester) {
-      return true;
-    }
-    return false
+    const hasBatch =
+      data.kelas_teori !== undefined || data.kelas_praktikum !== undefined;
+    const hasSingle = Boolean(
+      (data.kode_kelas && data.kode_kelas.trim().length > 0) ||
+      (data.nama_kelas && data.nama_kelas.trim().length > 0) ||
+      (data.kelas && data.kelas.trim().length > 0) ||
+      (data.nama && data.nama.trim().length > 0)
+    );
+    return (hasBatch || hasSingle) && Boolean(data.semester);
   },
   {
-    message: "Field kelas_teori dan kelas_praktikum wajib diisi",
+    message: "Field kelas_teori/kelas_praktikum atau nama/kode_kelas wajib diisi",
     path: ["kelas_teori"],
   }
 );
@@ -107,9 +113,11 @@ export const updateKelasSchema = z.object({
   }).optional(),
   from_semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
   to_semester: z.coerce.number().int().min(1, "Semester harus berupa angka minimal 1"),
-  kelas_teori: z.coerce.number().int().min(1, "kelas_teori harus berupa angka minimal 0"),
-  kelas_praktikum: z.coerce.number().int().min(1, "kelas_praktikum harus berupa angka minimal 0"),
+  kelas_teori: z.coerce.number().int().min(0, "kelas_teori harus berupa angka minimal 0").optional(),
+  kelas_praktikum: z.coerce.number().int().min(0, "kelas_praktikum harus berupa angka minimal 0").optional(),
   kode_kelas: z.string().optional(),
+  nama_kelas: z.string().optional(),
+  kelas: z.string().optional(),
 });
 
 export function updateKelasValidation(req, res, next) {

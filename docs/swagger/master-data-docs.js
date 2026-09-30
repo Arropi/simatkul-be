@@ -1047,7 +1047,7 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
         tags: ["Kelas"],
         summary: "Tambah data kelas (generate otomatis teori & praktikum)",
         description:
-          "Membuat rombel kelas teori dan praktikum secara otomatis berdasarkan prodi, semester, `kelas_teori`, dan `kelas_praktikum`.",
+          "Membuat rombel kelas teori dan praktikum secara otomatis berdasarkan prodi, semester, `kelas_teori`, dan `kelas_praktikum`, atau menambahkan single kelas langsung menggunakan `kode_kelas`/`nama_kelas`. Sistem akan memeriksa apakah nama kelas sudah ada pada kurikulum tersebut dan menolak jika terdapat duplikasi (HTTP 400).",
         parameters: [
           {
             name: "kurikulumId",
@@ -1085,10 +1085,13 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
             },
           },
           400: {
-            description: "Validasi gagal",
+            description: "Validasi gagal atau nama kelas sudah ada pada kurikulum ini",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: {
+                  message: "Kelas dengan nama 'PL4AA' sudah ada pada kurikulum ini",
+                },
               },
             },
           },
@@ -1904,12 +1907,15 @@ Seluruh error pada API Master Data dikembalikan dalam struktur JSON standar yang
       },
       CreateKelasRequest: {
         type: "object",
-        required: ["prodi", "semester", "kelas_teori", "kelas_praktikum"],
+        required: ["prodi", "semester"],
         properties: {
           prodi: { type: "string", enum: ["TRI", "TRPL", "TRIK", "TRE"], example: "TRPL" },
           semester: { type: "integer", minimum: 1, example: 4 },
-          kelas_teori: { type: "integer", minimum: 1, example: 2, description: "Jumlah kelas rombel teori (misal: 2 = AA & BB)" },
-          kelas_praktikum: { type: "integer", minimum: 1, example: 4, description: "Jumlah rombel praktikum (misal: 4 = A1, A2, B1, B2)" },
+          kelas_teori: { type: "integer", minimum: 0, example: 2, description: "Jumlah kelas rombel teori (misal: 2 = AA & BB)" },
+          kelas_praktikum: { type: "integer", minimum: 0, example: 4, description: "Jumlah rombel praktikum (misal: 4 = A1, A2, B1, B2)" },
+          kode_kelas: { type: "string", example: "PL4AA", description: "Opsional jika menambahkan single kelas langsung" },
+          nama_kelas: { type: "string", example: "PL4AA", description: "Opsional alias untuk kode_kelas" },
+          kelas: { type: "string", example: "AA", description: "Opsional suffix nama rombel kelas" },
         },
       },
       UpdateKelasRequest: {

@@ -143,19 +143,95 @@ export async function createKelasService(payload, kurikulumId) {
     throw error;
   }
 
-  const isSemesterExist = await kelasRepo.getKelasByKurikulumAndSemester(parsedKurikulumId, inputSemester);
-  if (isSemesterExist && isSemesterExist.length > 0) {
-    const error = new Error(`Kurikulum dengan ID ${parsedKurikulumId} sudah memiliki kelas dengan semester ${inputSemester}`);
-    error.statusCode = 400;
-    throw error;
+  const prodiUpper = payload.prodi ? payload.prodi.trim().toUpperCase() : "";
+  const abbr = PRODI_ABBR[prodiUpper] || prodiUpper;
+
+  let items = [];
+  const hasBatch =
+    payload.kelas_teori !== undefined || payload.kelas_praktikum !== undefined;
+
+  if (hasBatch) {
+    items = generateKelasItems(
+      payload.prodi,
+      inputSemester,
+      payload.kelas_teori,
+      payload.kelas_praktikum
+    );
+  } else {
+    const rawKode = (
+      payload.kode_kelas ||
+      payload.nama_kelas ||
+      payload.nama ||
+      ""
+    ).trim();
+    let rawKelas = (payload.kelas || "").trim();
+
+    let finalKode = rawKode;
+    if (!finalKode && rawKelas) {
+      finalKode = `${abbr}${inputSemester}${rawKelas}`;
+    }
+    if (!rawKelas && finalKode) {
+      const prefixRegex = new RegExp(`^${abbr}${inputSemester}`, "i");
+      rawKelas = finalKode.replace(prefixRegex, "") || finalKode;
+    }
+
+    if (!finalKode) {
+      const error = new Error("Field nama/kode_kelas wajib diisi");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    items = [
+      {
+        prodi: prodiUpper,
+        semester: inputSemester,
+        kelas: rawKelas,
+        kode_kelas: finalKode,
+      },
+    ];
   }
 
-  const items = generateKelasItems(
-    payload.prodi,
-    inputSemester,
-    payload.kelas_teori,
-    payload.kelas_praktikum
-  );
+  // 1. Cek duplikasi nama kelas di dalam data yang dikirim (internal request)
+  const seenCodes = new Set();
+  for (const item of items) {
+    const codeUpper = (item.kode_kelas || "").trim().toUpperCase();
+    if (seenCodes.has(codeUpper)) {
+      const error = new Error(`Kelas dengan nama '${item.kode_kelas}' duplikat dalam request`);
+      error.statusCode = 400;
+      throw error;
+    }
+    seenCodes.add(codeUpper);
+  }
+
+  // 2. Cek apakah nama kelas sudah ada pada kurikulum tersebut
+  const existingKurikulumKelas = await kelasRepo.getAllKelasByKurikulum(parsedKurikulumId);
+
+  for (const item of items) {
+    const duplicate = existingKurikulumKelas.find((existing) => {
+      const matchKode =
+        existing.kode_kelas &&
+        item.kode_kelas &&
+        existing.kode_kelas.trim().toUpperCase() === item.kode_kelas.trim().toUpperCase();
+
+      const matchProdiSemesterKelas =
+        existing.prodi &&
+        item.prodi &&
+        existing.prodi.trim().toUpperCase() === item.prodi.trim().toUpperCase() &&
+        Number(existing.semester) === Number(item.semester) &&
+        existing.kelas &&
+        item.kelas &&
+        existing.kelas.trim().toUpperCase() === item.kelas.trim().toUpperCase();
+
+      return matchKode || matchProdiSemesterKelas;
+    });
+
+    if (duplicate) {
+      const duplicateName = item.kode_kelas || item.kelas;
+      const error = new Error(`Kelas dengan nama '${duplicateName}' sudah ada pada kurikulum ini`);
+      error.statusCode = 400;
+      throw error;
+    }
+  }
 
   const createdClasses = await kelasRepo.createKelasBatch(items);
   const links = createdClasses.map((c) => ({
@@ -254,6 +330,35 @@ export async function updateKelasService(kurikulumId, payload) {
   // Jika toSemester berbeda dengan fromSemester, pastikan toSemester juga bersih
   if (toSemester !== fromSemester) {
     await kelasRepo.deleteKelasByKurikulumAndSemester(parsedKurikulumId, toSemester);
+  }
+
+  // Cek duplikasi di dalam items
+  const seenCodes = new Set();
+  for (const item of items) {
+    const codeUpper = (item.kode_kelas || "").trim().toUpperCase();
+    if (seenCodes.has(codeUpper)) {
+      const error = new Error(`Kelas dengan nama '${item.kode_kelas}' duplikat dalam request`);
+      error.statusCode = 400;
+      throw error;
+    }
+    seenCodes.add(codeUpper);
+  }
+
+  // Cek apakah ada kelas lain di kurikulum ini yang memiliki kode_kelas sama
+  const remainingKurikulumKelas = await kelasRepo.getAllKelasByKurikulum(parsedKurikulumId);
+  for (const item of items) {
+    const duplicate = remainingKurikulumKelas.find((existing) => {
+      return (
+        existing.kode_kelas &&
+        item.kode_kelas &&
+        existing.kode_kelas.trim().toUpperCase() === item.kode_kelas.trim().toUpperCase()
+      );
+    });
+    if (duplicate) {
+      const error = new Error(`Kelas dengan nama '${item.kode_kelas}' sudah ada pada kurikulum ini`);
+      error.statusCode = 400;
+      throw error;
+    }
   }
 
   // Buat kelas baru sesuai konfigurasi pada toSemester
