@@ -23,7 +23,8 @@ export function kurikulumParamValidation(req, res, next) {
 }
 
 export function penjadwalanIdParamValidation(req, res, next) {
-  const paramVal = req.params.penjadwalan_id || req.params.id;
+  const paramVal =
+    req.params.penjadwalanId || req.params.penjadwalan_id || req.params.id;
   const id = Number(paramVal);
   if (!paramVal || isNaN(id) || !Number.isInteger(id) || id <= 0) {
     const err = new Error("Parameter penjadwalan_id harus berupa angka integer positif");

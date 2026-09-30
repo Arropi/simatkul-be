@@ -195,6 +195,81 @@ Mendukung otomasi dan validasi jadwal perkuliahan, form options dinamis, pemanta
       },
     },
 
+    "/api/penjadwalan/jadwal/{penjadwalanId}": {
+      get: {
+        tags: ["Penjadwalan"],
+        summary: "Mengambil data detail jadwal terformat",
+        description: "Mengembalikan data detail jadwal perkuliahan tunggal berdasarkan ID jadwal, dengan struktur entitas (ruang, dosen, sesi, kelas, mata_kuliah) yang diformat konsisten seperti route form-options.",
+        parameters: [
+          {
+            name: "penjadwalanId",
+            in: "path",
+            required: true,
+            description: "ID Penjadwalan (integer positif)",
+            schema: { type: "integer", example: 1 },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Data detail jadwal berhasil diambil",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Data detail jadwal berhasil diambil" },
+                    data: { $ref: "#/components/schemas/PenjadwalanJadwalDetail" },
+                  },
+                },
+              },
+            },
+          },
+          400: { $ref: "#/components/responses/BadRequest" },
+          404: { $ref: "#/components/responses/NotFound" },
+          500: { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/penjadwalan/{kurikulumId}": {
+      get: {
+        tags: ["Penjadwalan"],
+        summary: "Mengambil seluruh data penjadwalan pada kurikulum",
+        description: "Mengembalikan daftar seluruh data penjadwalan perkuliahan berdasarkan ID Kurikulum dengan detail nama & kode mata kuliah, seluruh nama dosen pengajar (dari tabel penjadwalan_dosen), kode kelas, hari, nomor urut sesi terurut, dan nama ruang.",
+        parameters: [
+          {
+            name: "kurikulumId",
+            in: "path",
+            required: true,
+            description: "ID Kurikulum (integer positif)",
+            schema: { type: "integer", example: 1 },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Data seluruh penjadwalan berhasil diambil",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Data seluruh penjadwalan berhasil diambil" },
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/PenjadwalanAllItem" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { $ref: "#/components/responses/BadRequest" },
+          404: { $ref: "#/components/responses/NotFound" },
+          500: { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     "/api/penjadwalan/export-excel/dosen/{kurikulumId}": {
       get: {
         tags: ["Penjadwalan"],
@@ -565,6 +640,84 @@ Mendukung otomasi dan validasi jadwal perkuliahan, form options dinamis, pemanta
           jadwal: {
             type: "array",
             items: { $ref: "#/components/schemas/JadwalDosenItem" },
+          },
+        },
+      },
+
+      PenjadwalanAllItem: {
+        type: "object",
+        properties: {
+          id: { type: "integer", example: 1 },
+          kode_matkul: { type: "string", example: "MK001" },
+          nama_matkul: { type: "string", example: "Pemrograman Web 1" },
+          nama_dosen: {
+            type: "array",
+            items: { type: "string" },
+            example: ["Dr. Ir. Budi Santoso, M.Kom."],
+            description: "Daftar seluruh nama dosen pengajar dari tabel penjadwalan_dosen",
+          },
+          kode_kelas: { type: "string", example: "PL1AA" },
+          hari: { type: "string", example: "Senin" },
+          sesi: {
+            type: "array",
+            items: { type: "integer" },
+            example: [2],
+            description: "Nomor urutan sesi terurut (1, 2, 3, ...) pada kurikulum terkait",
+          },
+          nama_ruang: { type: "string", example: "Lab Software Engineering (LSE)" },
+        },
+      },
+
+      PenjadwalanJadwalDetail: {
+        type: "object",
+        properties: {
+          id: { type: "integer", example: 1 },
+          kurikulum_id: { type: "integer", example: 1 },
+          hari: { type: "string", example: "Senin" },
+          ruang: {
+            type: "object",
+            properties: {
+              id: { type: "integer", example: 3 },
+              nama: { type: "string", example: "CU205" },
+            },
+          },
+          dosen: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "integer", example: 4 },
+                nama: { type: "string", example: "Dr. Budi Santoso, M.Kom." },
+              },
+            },
+          },
+          sesi: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "integer", example: 23 },
+                nama: { type: "string", example: "Sesi 1" },
+              },
+            },
+          },
+          kelas: {
+            type: "object",
+            properties: {
+              id: { type: "integer", example: 2 },
+              kode_kelas: { type: "string", example: "PL4AA" },
+              prodi: { type: "string", example: "TRPL" },
+              semester: { type: "integer", example: 4 },
+              kelas: { type: "string", example: "A" },
+            },
+          },
+          mata_kuliah: {
+            type: "object",
+            properties: {
+              id: { type: "integer", example: 5 },
+              nama: { type: "string", example: "Pemrograman Web Lanjut" },
+              prodi: { type: "string", example: "TRPL" },
+            },
           },
         },
       },

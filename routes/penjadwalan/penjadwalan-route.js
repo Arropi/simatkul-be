@@ -36,6 +36,18 @@ penjadwalanRouter.get(
   penjadwalanController.getPenjadwalanDosen
 );
 
+penjadwalanRouter.get(
+  "/jadwal/:penjadwalanId",
+  penjadwalanIdParamValidation,
+  penjadwalanController.getPenjadwalanByIdFormatted
+);
+
+penjadwalanRouter.get(
+  "/:kurikulumId",
+  kurikulumParamValidation,
+  penjadwalanController.getAllPenjadwalanByKurikulum
+);
+
 penjadwalanRouter.post(
   "/",
   authMiddleware,
