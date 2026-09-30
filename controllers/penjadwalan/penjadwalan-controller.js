@@ -90,3 +90,33 @@ export async function deletePenjadwalan(req, res, next) {
     next(error);
   }
 }
+
+export async function getAllPenjadwalanByKurikulum(req, res, next) {
+  try {
+    const kurikulumId = Number(req.params.kurikulumId);
+    const data = await penjadwalanService.getPenjadwalanAllByKurikulumService(kurikulumId);
+    res.status(200).json({
+      message: "Data seluruh penjadwalan berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getPenjadwalanByIdFormatted(req, res, next) {
+  try {
+    const penjadwalanId = Number(
+      req.params.penjadwalanId || req.params.penjadwalan_id || req.params.id
+    );
+    const data = await penjadwalanService.getPenjadwalanByIdFormattedService(penjadwalanId);
+    res.status(200).json({
+      message: "Data detail jadwal berhasil diambil",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+

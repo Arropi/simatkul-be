@@ -38,9 +38,9 @@ export function kurikulumParamValidation(req, res, next) {
 
 // === DOSEN ===
 export const dosenSchema = z.object({
-  nama: z.string().min(1, "Field nama tidak boleh kosong"),
-  nidn: z.string().min(1, "Field nidn tidak boleh kosong").optional(),
-  jabatan_akademik: z.string().optional()
+  nama: z.string().min(1, "Field nama tidak boleh kosong").max(100, "Field nama maksimal 100 karakter"),
+  nidn: z.string().min(1, "Field nidn tidak boleh kosong").max(10, "Field nidn maksimal 10 karakter").optional(),
+  jabatan_akademik: z.string().max(20, "Field jabatan_akademik maksimal 20 karakter").optional()
 }).refine(
   (data) => (data.nama && data.nama.trim().length > 0),
   {
@@ -132,7 +132,7 @@ export const kurikulumSchema = z.object({
     error: () => "Semester harus 'Ganjil' atau 'Genap'",
   }),
   tahun_ajaran: z.coerce.number().int().min(1900, "Tahun ajaran minimal 1900").max(2100, "Tahun ajaran maksimal 2100").optional(),
-  description: z.string().optional().nullable(),
+  description: z.string().max(200, "Deskripsi maksimal 200 karakter").optional().nullable(),
   copy: z.union([z.boolean(), z.string()]).optional(),
 }).refine(
   (data) => data.tahun_ajaran !== undefined || data.tahun !== undefined,
@@ -310,7 +310,7 @@ export function mataKuliahQueryValidation(req, res, next) {
 
 // === RUANG ===
 export const ruangSchema = z.object({
-  nama: z.string().min(1, "Field nama ruang tidak boleh kosong"),
+  nama: z.string().min(1, "Field nama ruang tidak boleh kosong").max(50, "Field nama ruang maksimal 50 karakter"),
   kurikulum_id: z.coerce.number().int().positive().optional(),
   kurikulumId: z.coerce.number().int().positive().optional(),
 });

@@ -598,3 +598,98 @@ export async function getPenjadwalanDosenService(kurikulumId) {
     };
   });
 }
+
+export async function getPenjadwalanAllByKurikulumService(kurikulumId) {
+  const exists = await masterDataRepo.checkKurikulumExists(kurikulumId);
+  if (!exists) {
+    const error = new Error(`Data kurikulum dengan ID ${kurikulumId} tidak ditemukan`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const [sesiList, schedules] = await Promise.all([
+    masterDataRepo.getSesiByKurikulumId(kurikulumId),
+    penjadwalanRepo.getPenjadwalanWithDetailsByKurikulumId(kurikulumId),
+  ]);
+
+  const sesiOrderMap = createSesiOrderMap(sesiList);
+
+  const formatted = schedules.map((s) => {
+    const sIds = Array.isArray(s.sesi_ids) && s.sesi_ids.length > 0
+      ? s.sesi_ids
+      : s.sesi_id ? [s.sesi_id] : [];
+
+    const sesiListMapped = sIds
+      .map((sid) => sesiOrderMap.get(Number(sid)))
+      .filter((order) => order !== undefined)
+      .sort((a, b) => a - b);
+
+    const namaDosenList = Array.isArray(s.dosen_names) && s.dosen_names.length > 0
+      ? s.dosen_names
+      : (s.nama_dosen ? [s.nama_dosen] : []);
+
+    return {
+      id: s.id,
+      kode_matkul: s.kode_matkul || "",
+      nama_matkul: s.nama_matkul || "",
+      nama_dosen: namaDosenList,
+      kode_kelas: s.kode_kelas || "",
+      hari: s.hari || "",
+      sesi: sesiListMapped,
+      nama_ruang: s.nama_ruang || "",
+    };
+  });
+
+  formatted.sort((a, b) => {
+    const indexA = DAY_ORDER.indexOf((a.hari || "").trim().toLowerCase());
+    const indexB = DAY_ORDER.indexOf((b.hari || "").trim().toLowerCase());
+    const dayDiff = (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+    if (dayDiff !== 0) return dayDiff;
+
+    const firstSesiA = a.sesi.length > 0 ? a.sesi[0] : 999;
+    const firstSesiB = b.sesi.length > 0 ? b.sesi[0] : 999;
+    const sesiDiff = firstSesiA - firstSesiB;
+    if (sesiDiff !== 0) return sesiDiff;
+
+    return (a.kode_kelas || "").localeCompare(b.kode_kelas || "");
+  });
+
+  return formatted;
+}
+
+export async function getPenjadwalanByIdFormattedService(penjadwalanId) {
+  const schedule = await penjadwalanRepo.getPenjadwalanFormattedRawById(penjadwalanId);
+  if (!schedule) {
+    const error = new Error(`Data jadwal dengan ID ${penjadwalanId} tidak ditemukan`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const kurikulumSesiList = await masterDataRepo.getSesiByKurikulumId(schedule.kurikulum_id);
+  const sesiOrderMap = createSesiOrderMap(kurikulumSesiList);
+
+  const rawSesiIds = Array.isArray(schedule.sesi_ids) ? schedule.sesi_ids : [];
+  const formattedSesi = rawSesiIds
+    .map((sId) => {
+      const order = sesiOrderMap.get(Number(sId));
+      return {
+        id: Number(sId),
+        order: order !== undefined ? order : 999,
+        nama: order !== undefined ? `Sesi ${order}` : `Sesi ${sId}`,
+      };
+    })
+    .sort((a, b) => a.order - b.order)
+    .map(({ id, nama }) => ({ id, nama }));
+
+  return {
+    id: schedule.id,
+    kurikulum_id: schedule.kurikulum_id,
+    hari: schedule.hari,
+    ruang: schedule.ruang,
+    dosen: schedule.dosen || [],
+    sesi: formattedSesi,
+    kelas: schedule.kelas,
+    mata_kuliah: schedule.mata_kuliah,
+  };
+}
+

@@ -24,6 +24,7 @@ export async function getPenjadwalanWithDetailsByKurikulumId(kurikulumId) {
       p.kelas_id::int AS kelas_id,
       p.hari,
       mk.sks::int AS sks,
+      mk.kode AS kode_matkul,
       mk.nama AS nama_matkul,
       k.kode_kelas,
       r.nama AS nama_ruang,
@@ -59,6 +60,7 @@ export async function getPenjadwalanWithDetailsByKurikulumId(kurikulumId) {
     WHERE p.kurikulum_id = ${kurikulumId}
     ORDER BY p.id ASC;
   `);
+  console.log(result)
 
   return result.rows || result || [];
 }
@@ -171,6 +173,62 @@ export async function getPenjadwalanById(id) {
         ),
         '[]'::json
       ) AS dosen
+    FROM penjadwalan p
+    INNER JOIN kelas k ON p.kelas_id = k.id
+    INNER JOIN mata_kuliah mk ON p.matkul_id = mk.id
+    INNER JOIN ruang r ON p.ruang_id = r.id
+    WHERE p.id = ${id}
+    LIMIT 1;
+  `);
+
+  const rows = result.rows || result || [];
+  return rows[0] || null;
+}
+
+export async function getPenjadwalanFormattedRawById(id) {
+  const result = await db.execute(sql`
+    SELECT 
+      p.id::int AS id,
+      p.kurikulum_id::int AS kurikulum_id,
+      p.hari,
+      json_build_object(
+        'id', r.id::int,
+        'nama', r.nama
+      ) AS ruang,
+      json_build_object(
+        'id', k.id::int,
+        'kode_kelas', k.kode_kelas,
+        'prodi', k.prodi,
+        'semester', k.semester::int,
+        'kelas', k.kelas
+      ) AS kelas,
+      json_build_object(
+        'id', mk.id::int,
+        'nama', mk.nama,
+        'prodi', mk.prodi
+      ) AS mata_kuliah,
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', d.id::int,
+              'nama', d.nama
+            ) ORDER BY d.nama ASC, d.id ASC
+          )
+          FROM penjadwalan_dosen pd
+          INNER JOIN dosen d ON pd.dosen_id = d.id
+          WHERE pd.penjadwalan_id = p.id
+        ),
+        '[]'::json
+      ) AS dosen,
+      COALESCE(
+        (
+          SELECT json_agg(ps.sesi_id::int)
+          FROM penjadwalan_sesi ps
+          WHERE ps.penjadwalan_id = p.id
+        ),
+        '[]'::json
+      ) AS sesi_ids
     FROM penjadwalan p
     INNER JOIN kelas k ON p.kelas_id = k.id
     INNER JOIN mata_kuliah mk ON p.matkul_id = mk.id

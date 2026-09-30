@@ -202,6 +202,8 @@ Modul Penjadwalan mengelola plotting jadwal perkuliahan berbasis relasi modern (
 | `GET` | `/api/penjadwalan/ruang/:kurikulumId` | Rekap jadwal per ruang (dengan `nama_matkul`, `kode_kelas`, `nama_dosen`), sesi terurut, dan okupansi | ❌ |
 | `GET` | `/api/penjadwalan/kelas/:kurikulumId` | Rekap jadwal per kelas (dengan `nama_matkul`, `nama_ruang`, `nama_dosen`) berdasarkan `kode_kelas` | ❌ |
 | `GET` | `/api/penjadwalan/dosen/:kurikulumId` | Rekap jadwal mengajar dosen (dengan `nama_matkul`, `kode_kelas`, `nama_ruang`) beserta akumulasi total `beban_sks` | ❌ |
+| `GET` | `/api/penjadwalan/:kurikulumId` | Mengambil seluruh data jadwal perkuliahan pada kurikulum (kode & nama matkul, seluruh nama dosen pengajar, kode kelas, hari, urutan sesi, dan ruang) | ❌ |
+| `GET` | `/api/penjadwalan/jadwal/:penjadwalanId` | Detail data jadwal terformat sesuai struktur entitas form-options (`ruang`, `dosen`, `sesi`, `kelas`, `mata_kuliah`) | ❌ |
 | `GET` | `/api/penjadwalan/export-excel/dosen/:kurikulumId` | Export jadwal mengajar dosen ke spreadsheet Excel (`.xlsx`) | ❌ |
 | `GET` | `/api/penjadwalan/export-excel/kelas/:kurikulumId` | Export jadwal perkuliahan kelas ke spreadsheet Excel (`.xlsx`) | ❌ |
 | `GET` | `/api/penjadwalan/export-excel/ruang/:kurikulumId` | Export jadwal penggunaan ruang ke spreadsheet Excel (`.xlsx`) | ❌ |
